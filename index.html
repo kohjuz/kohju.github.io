@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>灯带环绕圣诞树 | 点击弹出祝福语</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(to bottom, #0a1a2a, #1a3a5f);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            touch-action: manipulation;
+            padding: 20px;
+        }
+        
+        .title {
+            color: #FFD700;
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+            font-size: 2rem;
+        }
+        
+        .tree-container {
+            position: relative;
+            width: 300px;
+            height: 400px;
+            margin: 20px 0;
+        }
+        
+        /* 圣诞树主体 */
+        .tree {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 100px solid transparent;
+            border-right: 100px solid transparent;
+            border-bottom: 200px solid #228B22;
+            top: 100px;
+            left: 50px;
+            z-index: 2;
+        }
+        
+        .tree::before {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 80px solid transparent;
+            border-right: 80px solid transparent;
+            border-bottom: 160px solid #32CD32;
+            top: 40px;
+            left: -80px;
+        }
+        
+        .tree::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 60px solid transparent;
+            border-right: 60px solid transparent;
+            border-bottom: 120px solid #3CB371;
+            top: 80px;
+            left: -60px;
+        }
+        
+        /* 树干 */
+        .trunk {
+            position: absolute;
+            width: 30px;
+            height: 50px;
+            background: #8B4513;
+            top: 300px;
+            left: 135px;
+            z-index: 1;
+            border-radius: 0 0 5px 5px;
+        }
+        
+        /* 树顶星星 */
+        .star {
+            position: absolute;
+            top: 70px;
+            left: 145px;
+            color: gold;
+            font-size: 40px;
+            text-shadow: 0 0 20px gold;
+            z-index: 10;
+            animation: spin 4s linear infinite;
+        }
+        
+        /* 灯带 - 环绕效果 */
+        .lights-container {
+            position: absolute;
+            width: 300px;
+            height: 400px;
+            z-index: 3;
+            border-radius: 50%;
+            animation: rotate 20s linear infinite;
+        }
+        
+        .light {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: currentColor;
+            box-shadow: 0 0 10px currentColor;
+            transform: translate(-50%, -50%);
+            animation: twinkle 1.5s infinite alternate;
+        }
+        
+        /* 祝福语容器 */
+        .blessing {
+            position: absolute;
+            color: #FFD700;
+            font-size: 24px;
+            font-weight: bold;
+            pointer-events: none;
+            z-index: 100;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+            animation: floatUp 2s forwards ease-out;
+            white-space: nowrap;
+            max-width: 200px;
+            text-align: center;
+        }
+        
+        /* 操作提示 */
+        .instructions {
+            color: #87CEEB;
+            text-align: center;
+            margin-top: 40px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            max-width: 300px;
+            line-height: 1.5;
+        }
+        
+        /* 动画 */
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes twinkle {
+            0% { opacity: 0.3; transform: translate(-50%, -50%) scale(0.8); }
+            100% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+        }
+        
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-100px) scale(1.2); }
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 480px) {
+            .tree-container {
+                width: 250px;
+                height: 350px;
+            }
+            
+            .tree {
+                border-left: 80px solid transparent;
+                border-right: 80px solid transparent;
+                border-bottom: 160px solid #228B22;
+                left: 45px;
+            }
+            
+            .tree::before {
+                border-left: 65px solid transparent;
+                border-right: 65px solid transparent;
+                border-bottom: 130px solid #32CD32;
+                left: -65px;
+            }
+            
+            .tree::after {
+                border-left: 50px solid transparent;
+                border-right: 50px solid transparent;
+                border-bottom: 100px solid #3CB371;
+                left: -50px;
+            }
+            
+            .trunk {
+                left: 110px;
+            }
+            
+            .star {
+                left: 120px;
+                font-size: 35px;
+            }
+            
+            .lights-container {
+                width: 250px;
+                height: 350px;
+            }
+            
+            .title {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1 class="title">✨ 灯带环绕圣诞树 ✨</h1>
+    
+    <div class="tree-container">
+        <!-- 圣诞树 -->
+        <div class="tree"></div>
+        <div class="trunk"></div>
+        <div class="star">⭐</div>
+        
+        <!-- 灯带 -->
+        <div class="lights-container" id="lightsContainer">
+            <!-- 灯带将通过JavaScript动态生成 -->
+        </div>
+        
+        <!-- 祝福语将在这里动态生成 -->
+    </div>
+    
+    <div class="instructions">
+        <p>💡 <strong>点击屏幕任意位置</strong>弹出祝福语</p>
+        <p>💡 <strong>按键盘任意键</strong>也可弹出祝福语</p>
+        <p>💡 在手机上直接触摸即可</p>
+    </div>
+
+    <script>
+        // 祝福语库
+        const blessings = [
+            "🎄 圣诞快乐！",
+            "❤️ 平安喜乐",
+            "✨ 心想事成",
+            "🎁 好运连连",
+            "🌟 幸福安康",
+            "🦌 铃儿响叮当",
+            "🎅 圣诞老人来啦",
+            "☃️ 雪花飘呀飘",
+            "🔔 铃铛响不停",
+            "🕯️ 烛光暖人心",
+            "⛄ 雪人微笑中",
+            "🍎 平安果甜甜"
+        ];
+        
+        // 灯带颜色
+        const lightColors = ['#FF0000', '#00FF00', '#FFFF00', '#1E90FF', '#FF69B4', '#FFA500', '#9370DB', '#00FFFF'];
+        
+        // 初始化灯带
+        function initLights() {
+            const container = document.getElementById('lightsContainer');
+            const numLights = 50; // 灯的数量
+            const radiusX = 120; // 椭圆X轴半径
+            const radiusY = 180; // 椭圆Y轴半径
+            const centerX = 150; // 中心点X
+            const centerY = 200; // 中心点Y
+            
+            // 清空现有灯
+            container.innerHTML = '';
+            
+            // 创建灯
+            for (let i = 0; i < numLights; i++) {
+                const light = document.createElement('div');
+                light.className = 'light';
+                
+                // 计算椭圆上的位置
+                const angle = (i / numLights) * Math.PI * 2;
+                const x = centerX + radiusX * Math.cos(angle);
+                const y = centerY + radiusY * Math.sin(angle);
+                
+                // 设置灯的位置
+                light.style.left = `${x}px`;
+                light.style.top = `${y}px`;
+                
+                // 随机颜色
+                light.style.color = lightColors[Math.floor(Math.random() * lightColors.length)];
+                
+                // 随机动画延迟
+                light.style.animationDelay = `${Math.random() * 2}s`;
+                
+                container.appendChild(light);
+            }
+        }
+        
+        // 显示祝福语
+        function showBlessing(x, y) {
+            // 随机选择一个祝福语
+            const blessingText = blessings[Math.floor(Math.random() * blessings.length)];
+            
+            // 创建祝福语元素
+            const blessing = document.createElement('div');
+            blessing.className = 'blessing';
+            blessing.textContent = blessingText;
+            
+            // 设置位置
+            blessing.style.left = `${x}px`;
+            blessing.style.top = `${y}px`;
+            
+            // 添加到页面
+            document.querySelector('.tree-container').appendChild(blessing);
+            
+            // 动画结束后移除元素
+            setTimeout(() => {
+                blessing.remove();
+            }, 2000);
+        }
+        
+        // 处理点击事件
+        document.addEventListener('click', function(e) {
+            showBlessing(e.clientX, e.clientY);
+        });
+        
+        // 处理触摸事件（移动端）
+        document.addEventListener('touchstart', function(e) {
+            e.preventDefault(); // 阻止默认行为
+            const touch = e.touches[0];
+            showBlessing(touch.clientX, touch.clientY);
+        }, { passive: false });
+        
+        // 处理键盘事件
+        document.addEventListener('keydown', function() {
+            // 在屏幕中央随机位置显示祝福语
+            const x = window.innerWidth / 2 + (Math.random() - 0.5) * 200;
+            const y = window.innerHeight / 2 + (Math.random() - 0.5) * 200;
+            showBlessing(x, y);
+        });
+        
+        // 页面加载完成后初始化
+        window.addEventListener('load', function() {
+            initLights();
+            
+            // 初始显示一个欢迎祝福语
+            setTimeout(() => {
+                const x = window.innerWidth / 2;
+                const y = window.innerHeight / 2 - 50;
+                showBlessing(x, y);
+            }, 1000);
+        });
+        
+        // 窗口大小改变时重新初始化灯带
+        window.addEventListener('resize', initLights);
+    </script>
+</body>
+</html>

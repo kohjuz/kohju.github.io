@@ -2,483 +2,1224 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebAR粒子圣诞树互动系统（简化版）</title>
-    <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
-    <script src="https://unpkg.com/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
+    <title>键盘控制版 WebAR 粒子圣诞树 | Three.js</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <!-- 使用 unpkg CDN 引入所有依赖 -->
+    <script src="https://unpkg.com/three@0.164.1/build/three.min.js"></script>
+    <script src="https://unpkg.com/three@0.164.1/examples/js/controls/OrbitControls.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { overflow: hidden; background: #000; font-family: Arial, sans-serif; }
-        #canvas-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; }
-        #control-panel { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); z-index: 100;
-            background: rgba(0,0,0,0.8); padding: 15px; border-radius: 10px; display: flex; gap: 10px; }
-        #photo-upload, #prompt-input, #control-btn { padding: 8px; border-radius: 5px; border: none; }
-        #blessing { position: fixed; color: #0ff; font-size: 24px; text-shadow: 0 0 10px #0ff;
-            pointer-events: none; z-index: 99; opacity: 0; transition: opacity 0.5s, transform 1s; }
-        #keyboard-hint { position: fixed; bottom: 20px; left: 20px; color: #fff; font-size: 14px;
-            background: rgba(0,0,0,0.7); padding: 10px; border-radius: 5px; }
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+            cursor: none; /* 隐藏鼠标光标 */
+        }
+        #container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+        #threeCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        #debugInfo {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            z-index: 100;
+            max-width: 300px;
+            border: 1px solid #00ffff;
+        }
+        #controlPanel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 40, 60, 0.85);
+            padding: 20px;
+            border-radius: 15px;
+            z-index: 100;
+            width: 320px;
+            border: 2px solid #0af;
+            backdrop-filter: blur(5px);
+        }
+        #controlPanel h3 {
+            color: #0ff;
+            margin-bottom: 15px;
+            text-align: center;
+            border-bottom: 1px solid #0ff;
+            padding-bottom: 8px;
+        }
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            background: linear-gradient(45deg, #0066cc, #00aaff);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+        .btn:hover {
+            background: linear-gradient(45deg, #00aaff, #00ffff);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 170, 255, 0.4);
+        }
+        .input-group {
+            margin: 15px 0;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #a0e0ff;
+        }
+        .input-group input, .input-group textarea {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #00aaff;
+            background: rgba(0, 20, 40, 0.8);
+            color: white;
+            font-size: 14px;
+        }
+        .input-group textarea {
+            height: 80px;
+            resize: vertical;
+        }
+        #status {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px 20px;
+            border-radius: 20px;
+            z-index: 100;
+            border: 1px solid #ff0;
+            text-align: center;
+            min-width: 250px;
+        }
+        #blessingDisplay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3.5rem;
+            font-weight: bold;
+            color: #ffff00;
+            text-shadow: 0 0 20px #ff0, 0 0 40px #f0f;
+            z-index: 50;
+            opacity: 0;
+            pointer-events: none;
+            text-align: center;
+            white-space: nowrap;
+            transition: opacity 0.5s;
+        }
+        #loading {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            font-size: 24px;
+            color: #0ff;
+            flex-direction: column;
+        }
+        .snowflake {
+            position: absolute;
+            top: -20px;
+            color: white;
+            font-size: 1rem;
+            opacity: 0.8;
+            user-select: none;
+            pointer-events: none;
+            z-index: 5;
+        }
+        #virtualHand {
+            position: absolute;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(0, 170, 255, 0.8), rgba(0, 100, 200, 0.3));
+            border: 3px solid #0ff;
+            box-shadow: 0 0 30px #0ff;
+            z-index: 90;
+            pointer-events: none;
+            transform: translate(-50%, -50%);
+            transition: transform 0.1s, width 0.3s, height 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: white;
+        }
+        #keyboardHelp {
+            position: absolute;
+            bottom: 80px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            z-index: 100;
+            max-width: 400px;
+            border: 1px solid #ff9900;
+        }
+        .key {
+            display: inline-block;
+            background: #333;
+            color: #ff0;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin: 0 3px;
+            font-family: monospace;
+            border: 1px solid #666;
+        }
+        .hand-icon {
+            font-size: 20px;
+            margin-right: 8px;
+        }
     </style>
 </head>
 <body>
-    <div id="control-panel">
-        <input type="file" id="photo-upload" accept="image/*">
-        <input type="text" id="prompt-input" placeholder="修改提示词...">
-        <button id="control-btn">应用</button>
+    <div id="loading">
+        <p>🎮 加载键盘控制版粒子圣诞树...</p>
+        <p style="font-size:16px; margin-top:20px; color:#aaa;">无需摄像头，使用键盘控制</p>
     </div>
-    <div id="blessing"></div>
-    <div id="keyboard-hint">
-        键盘操作：<br>
-        Q-张手(球) W-剪刀手(文字) E-握拳(圆环) R-食指(星) T-大拇指(爱心)<br>
-        按住空格-挥手风暴 滚轮-深度缩放 点击-显示祝福
-    </div>
-    <div id="canvas-container"></div>
 
-    <script>
-        // 核心配置
-        const CONFIG = {
-            particleCount: 16000,
-            baseColor: 0x00ffff, // 青色
-            treeHeight: 15,
-            snowCount: 500,
-            gravity: 0.02,
-            blastForce: 0.8,
-            waveForce: 0.5,
-            scaleSpeed: 0.05
+    <div id="container">
+        <!-- Three.js 画布 -->
+        <canvas id="threeCanvas"></canvas>
+        
+        <!-- 虚拟手部指示器 -->
+        <div id="virtualHand">✋</div>
+        
+        <!-- 顶部控制面板 -->
+        <div id="controlPanel">
+            <h3>🎮 键盘控制面板</h3>
+            <button class="btn" id="autoDemoBtn">🤖 自动演示模式</button>
+            <button class="btn" id="resetBtn">🎄 重置为圣诞树</button>
+            
+            <div class="input-group">
+                <label for="photoUpload">📷 上传照片（驱动粒子）</label>
+                <input type="file" id="photoUpload" accept="image/*">
+                <p style="font-size:12px; color:#8af; margin-top:5px;">照片色彩将影响粒子外观</p>
+            </div>
+            
+            <div class="input-group">
+                <label for="promptInput">💬 自定义祝福提示词</label>
+                <textarea id="promptInput" placeholder="例如：圣诞快乐，平安喜乐！">圣诞快乐，平安喜乐！</textarea>
+            </div>
+            
+            <button class="btn" id="updatePromptBtn">✨ 更新提示词</button>
+            
+            <div class="input-group">
+                <label>🎯 当前手势状态</label>
+                <div id="gestureState" style="padding:10px; background:rgba(0,50,100,0.5); border-radius:5px; margin-top:5px;">
+                    等待键盘输入...
+                </div>
+            </div>
+            
+            <div style="margin-top: 15px; padding: 10px; background: rgba(255,100,0,0.1); border-radius: 8px; border-left: 3px solid #ff9900;">
+                <p style="color:#ff9900; font-size: 12px; margin: 0;">💡 <strong>虚拟手控制</strong></p>
+                <p style="color:#ffcc00; font-size: 11px; margin-top: 5px;">使用 <span class="key">W A S D</span> 或 <span class="key">↑ ← ↓ →</span> 移动虚拟手</p>
+            </div>
+        </div>
+        
+        <!-- 调试信息面板 -->
+        <div id="debugInfo">
+            <h4>🔧 系统信息</h4>
+            <p>粒子数量: <span id="particleCount">16,000</span></p>
+            <p>物理模型: 速度 + 加速度</p>
+            <p>控制模式: <span style="color:#0ff">键盘控制</span></p>
+            <p>帧率: <span id="fps">0</span> FPS</p>
+            <p>虚拟手位置: X:<span id="handX">50</span>% Y:<span id="handY">50</span>%</p>
+        </div>
+        
+        <!-- 键盘帮助面板 -->
+        <div id="keyboardHelp">
+            <h4 style="color:#ff9900; margin-bottom: 10px;">⌨️ 键盘快捷键</h4>
+            <p><span class="hand-icon">🖐️</span> 张手(球) <span class="key">1</span></p>
+            <p><span class="hand-icon">✌️</span> 剪刀手(文字) <span class="key">2</span></p>
+            <p><span class="hand-icon">✊</span> 握拳(圆环) <span class="key">3</span></p>
+            <p><span class="hand-icon">☝️</span> 食指(星) <span class="key">4</span></p>
+            <p><span class="hand-icon">👍</span> 竖拇指(心) <span class="key">5</span></p>
+            <p><span class="hand-icon">💨</span> 挥手风暴 <span class="key">F</span> + 方向键</p>
+            <p><span class="hand-icon">➕</span> 放大(靠近) <span class="key">+</span></p>
+            <p><span class="hand-icon">➖</span> 缩小(远离) <span class="key">-</span></p>
+            <p><span class="hand-icon">🌀</span> 随机切换 <span class="key">空格</span></p>
+            <p><span class="hand-icon">❄️</span> 雪花开关 <span class="key">S</span></p>
+        </div>
+        
+        <!-- 祝福语显示 -->
+        <div id="blessingDisplay"></div>
+        
+        <!-- 系统状态栏 -->
+        <div id="status">使用数字键 1-5 切换粒子形态</div>
+    </div>
+
+    <!-- 雪花容器 -->
+    <div id="snowContainer"></div>
+
+<script>
+// ==================== 全局变量与配置 ====================
+const CONFIG = {
+    PARTICLE_COUNT: 16000,         // 粒子总数
+    PARTICLE_COLOR: 0x00ffff,      // 青色
+    PHYSICS: {
+        DAMPING: 0.95,             // 速度阻尼
+        ATTRACTION_FORCE: 0.02,    // 形态吸引力
+        EXPLOSION_FORCE: 3.0,      // 爆炸过渡力
+        WIND_FORCE: 0.8,           // 挥手风力 (增强)
+    },
+    GESTURE: {
+        OPEN_HAND: 'open',         // 张手
+        SCISSOR: 'scissor',        // 剪刀手
+        FIST: 'fist',              // 握拳
+        POINT: 'point',            // 食指
+        THUMB_UP: 'thumb_up',      // 竖拇指
+    },
+    KEYBOARD: {
+        HAND_SPEED: 8,             // 虚拟手移动速度
+        MAX_HAND_SCALE: 2.0,       // 最大手部缩放
+        MIN_HAND_SCALE: 0.5,       // 最小手部缩放
+    }
+};
+
+// 核心 Three.js 变量
+let scene, camera, renderer, controls, particleSystem;
+let particleGeometry, particleMaterial;
+
+// 系统状态变量
+let currentGesture = null;
+let lastGestureTime = 0;
+let isExploding = false;
+let explosionTime = 0;
+let blessingWords = ["圣诞快乐", "平安喜乐", "心想事成", "幸福安康", "新年进步"];
+let currentPrompt = "圣诞快乐，平安喜乐！";
+let uploadedTexture = null;
+
+// 物理粒子数据
+let particlePositions, particleVelocities, particleAccelerations;
+let targetPositions = []; // 目标位置（用于形态变换）
+
+// 虚拟手状态
+let virtualHand = {
+    x: 50,      // 屏幕百分比位置 X (0-100)
+    y: 50,      // 屏幕百分比位置 Y (0-100)
+    scale: 1.0, // 手部缩放 (模拟深度)
+    velocityX: 0,
+    velocityY: 0,
+    isMoving: false,
+    windForce: { x: 0, y: 0 }
+};
+
+// 按键状态跟踪
+let keysPressed = {};
+let lastWindTime = 0;
+
+// 帧率计算
+let frameCount = 0, lastTime = 0, fps = 0;
+
+// ==================== 主初始化函数 ====================
+window.onload = function() {
+    console.log("开始初始化键盘控制版粒子圣诞树系统...");
+    initThreeJS();
+    createParticleSystem();
+    initSnowflakes();
+    setupEventListeners();
+    initVirtualHand();
+    animate();
+    
+    // 隐藏加载界面
+    setTimeout(() => {
+        document.getElementById('loading').style.display = 'none';
+        showRandomBlessing();
+    }, 1500);
+    
+    updateStatus("系统就绪！使用数字键 1-5 切换粒子形态");
+};
+
+// ==================== Three.js 初始化 ====================
+function initThreeJS() {
+    // 创建场景
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x000011);
+    scene.fog = new THREE.Fog(0x000033, 10, 50);
+    
+    // 创建相机
+    camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 5, 15);
+    
+    // 创建渲染器
+    const threeCanvas = document.getElementById('threeCanvas');
+    renderer = new THREE.WebGLRenderer({ canvas: threeCanvas, alpha: true, antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.shadowMap.enabled = true;
+    
+    // 添加轨道控制（调试用）
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.dampingFactor = 0.05;
+    
+    // 添加环境光
+    const ambientLight = new THREE.AmbientLight(0x222244);
+    scene.add(ambientLight);
+    
+    // 添加方向光
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(10, 20, 5);
+    directionalLight.castShadow = true;
+    scene.add(directionalLight);
+    
+    // 添加点光源（粒子高光）
+    const pointLight = new THREE.PointLight(0x00ffff, 2, 50);
+    pointLight.position.set(0, 10, 0);
+    scene.add(pointLight);
+    
+    // 窗口大小调整事件
+    window.addEventListener('resize', onWindowResize);
+    
+    updateStatus("Three.js 场景初始化完成");
+}
+
+// ==================== 创建粒子系统 ====================
+function createParticleSystem() {
+    // 创建粒子几何体
+    particleGeometry = new THREE.BufferGeometry();
+    
+    // 初始化粒子位置、速度、加速度数组
+    const positions = new Float32Array(CONFIG.PARTICLE_COUNT * 3);
+    const colors = new Float32Array(CONFIG.PARTICLE_COUNT * 3);
+    particleVelocities = new Array(CONFIG.PARTICLE_COUNT);
+    particleAccelerations = new Array(CONFIG.PARTICLE_COUNT);
+    targetPositions = new Array(CONFIG.PARTICLE_COUNT);
+    
+    // 圣诞树形状的目标位置（圆锥形）
+    for (let i = 0; i < CONFIG.PARTICLE_COUNT; i++) {
+        const i3 = i * 3;
+        
+        // 在圆锥范围内随机生成位置
+        const height = Math.random(); // 0到1的高度
+        const angle = Math.random() * Math.PI * 2;
+        const radius = (1 - height) * 5; // 越往上半径越小
+        
+        // 目标位置：圣诞树形状
+        const x = Math.cos(angle) * radius * (Math.random() * 0.3 + 0.7);
+        const y = height * 10 - 2; // 总高10个单位，底部在y=-2
+        const z = Math.sin(angle) * radius * (Math.random() * 0.3 + 0.7);
+        
+        targetPositions[i] = new THREE.Vector3(x, y, z);
+        
+        // 初始位置：随机分散在空间
+        positions[i3] = (Math.random() - 0.5) * 20;
+        positions[i3 + 1] = (Math.random() - 0.5) * 20;
+        positions[i3 + 2] = (Math.random() - 0.5) * 20;
+        
+        // 青色系颜色
+        colors[i3] = 0.0;      // R
+        colors[i3 + 1] = 1.0;  // G
+        colors[i3 + 2] = 1.0;  // B
+        
+        // 初始化速度和加速度
+        particleVelocities[i] = new THREE.Vector3(0, 0, 0);
+        particleAccelerations[i] = new THREE.Vector3(0, 0, 0);
+    }
+    
+    particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    
+    // 创建粒子材质
+    particleMaterial = new THREE.PointsMaterial({
+        size: 0.08,
+        vertexColors: true,
+        transparent: true,
+        opacity: 0.9,
+        blending: THREE.AdditiveBlending,
+        sizeAttenuation: true
+    });
+    
+    // 创建粒子系统
+    particleSystem = new THREE.Points(particleGeometry, particleMaterial);
+    scene.add(particleSystem);
+    
+    // 预定义其他形态的目标位置
+    defineParticleShapes();
+    
+    updateStatus(`已创建 ${CONFIG.PARTICLE_COUNT.toLocaleString()} 个流体粒子`);
+}
+
+// ==================== 定义粒子形态 ====================
+function defineParticleShapes() {
+    // 形态1：球体（张手）
+    particleTargets = particleTargets || {};
+    particleTargets.sphere = [];
+    for (let i = 0; i < CONFIG.PARTICLE_COUNT; i++) {
+        const phi = Math.acos(2 * Math.random() - 1);
+        const theta = Math.random() * Math.PI * 2;
+        const radius = 4;
+        
+        const x = radius * Math.sin(phi) * Math.cos(theta);
+        const y = radius * Math.sin(phi) * Math.sin(theta);
+        const z = radius * Math.cos(phi);
+        
+        particleTargets.sphere[i] = new THREE.Vector3(x, y, z);
+    }
+    
+    // 形态2：文字（剪刀手）- "我是 Mok"
+    particleTargets.text = [];
+    // 创建文字形状的粒子分布
+    for (let i = 0; i < CONFIG.PARTICLE_COUNT; i++) {
+        // 创建简单的文字形状
+        let x = 0, y = 0, z = 0;
+        
+        // 根据位置创建"MOK"字样（简化版）
+        const charWidth = 12;
+        const charHeight = 8;
+        const charSpacing = 3;
+        
+        // 将粒子分配到三个字母
+        const letterIndex = Math.floor(i / (CONFIG.PARTICLE_COUNT / 3));
+        const particleInLetter = i % (CONFIG.PARTICLE_COUNT / 3);
+        
+        // 为每个字母创建不同的形状
+        if (letterIndex === 0) { // M
+            x = (Math.random() - 0.5) * charWidth - (charWidth + charSpacing);
+            y = (Math.random() - 0.5) * charHeight;
+            // M的形状：两竖加两个斜线
+            const inM = (Math.abs(x) < 1.5 && y > -2 && y < 2) || 
+                       (Math.abs(x + 3) < 1 && y > -2 && y < 2) || 
+                       (Math.abs(x - 3) < 1 && y > -2 && y < 2) ||
+                       (Math.abs(x) < 4 && Math.abs(y - x/2) < 0.5 && x > -3 && x < 0) ||
+                       (Math.abs(x) < 4 && Math.abs(y + x/2) < 0.5 && x > 0 && x < 3);
+            
+            if (!inM && Math.random() > 0.3) {
+                // 不在字母内的粒子分散
+                x = (Math.random() - 0.5) * 20;
+                y = (Math.random() - 0.5) * 20;
+                z = (Math.random() - 0.5) * 10;
+            }
+        } else if (letterIndex === 1) { // O
+            x = (Math.random() - 0.5) * charWidth;
+            y = (Math.random() - 0.5) * charHeight;
+            // O的形状：圆环
+            const dist = Math.sqrt(x*x + y*y);
+            const inO = dist > 2 && dist < 4;
+            
+            if (!inO && Math.random() > 0.3) {
+                x = (Math.random() - 0.5) * 20;
+                y = (Math.random() - 0.5) * 20;
+                z = (Math.random() - 0.5) * 10;
+            }
+        } else { // K
+            x = (Math.random() - 0.5) * charWidth + (charWidth + charSpacing);
+            y = (Math.random() - 0.5) * charHeight;
+            // K的形状：一竖加两个斜线
+            const inK = (Math.abs(x) < 1 && y > -3 && y < 3) || 
+                       (Math.abs(y - x) < 1 && x > 0 && x < 4 && y > -2 && y < 4) ||
+                       (Math.abs(y + x) < 1 && x > 0 && x < 4 && y > -4 && y < 2);
+            
+            if (!inK && Math.random() > 0.3) {
+                x = (Math.random() - 0.5) * 20;
+                y = (Math.random() - 0.5) * 20;
+                z = (Math.random() - 0.5) * 10;
+            }
+        }
+        
+        particleTargets.text[i] = new THREE.Vector3(x * 0.5, y * 0.5, z);
+    }
+    
+    // 形态3：圆环（握拳）
+    particleTargets.ring = [];
+    for (let i = 0; i < CONFIG.PARTICLE_COUNT; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const radius = 5;
+        const width = 0.5;
+        
+        const x = Math.cos(angle) * (radius + (Math.random() - 0.5) * width);
+        const y = (Math.random() - 0.5) * 0.5;
+        const z = Math.sin(angle) * (radius + (Math.random() - 0.5) * width);
+        
+        particleTargets.ring[i] = new THREE.Vector3(x, y, z);
+    }
+    
+    // 形态4：星星（食指）
+    particleTargets.star = [];
+    for (let i = 0; i < CONFIG.PARTICLE_COUNT; i++) {
+        // 生成五角星形状的粒子分布
+        const points = 5;
+        const pointIndex = Math.floor(Math.random() * points);
+        const angle = pointIndex * (Math.PI * 2 / points);
+        
+        // 五角星内外点
+        const isOuter = Math.random() > 0.5;
+        const radius = isOuter ? 4 : 2;
+        
+        const x = Math.cos(angle) * radius;
+        const y = Math.sin(angle) * radius;
+        const z = (Math.random() - 0.5) * 1;
+        
+        particleTargets.star[i] = new THREE.Vector3(x, y, z);
+    }
+    
+    // 形态5：爱心（竖大拇指）
+    particleTargets.heart = [];
+    for (let i = 0; i < CONFIG.PARTICLE_COUNT; i++) {
+        // 心形参数方程 (简化版)
+        const t = Math.random() * Math.PI * 2;
+        const scale = 3;
+        
+        const x = scale * 16 * Math.pow(Math.sin(t), 3);
+        const y = scale * (13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
+        const z = (Math.random() - 0.5) * 2;
+        
+        particleTargets.heart[i] = new THREE.Vector3(x * 0.015, -y * 0.015 + 1.5, z);
+    }
+}
+
+// ==================== 切换粒子形态 ====================
+function switchParticleShape(gesture) {
+    const shapeMap = {
+        'open': 'sphere',
+        'scissor': 'text',
+        'fist': 'ring',
+        'point': 'star',
+        'thumb_up': 'heart'
+    };
+    
+    const targetShape = shapeMap[gesture];
+    if (!targetShape || !particleTargets[targetShape]) {
+        console.warn(`未知的粒子形态: ${gesture}`);
+        return;
+    }
+    
+    // 更新目标位置
+    for (let i = 0; i < CONFIG.PARTICLE_COUNT; i++) {
+        if (particleTargets[targetShape][i]) {
+            targetPositions[i].copy(particleTargets[targetShape][i]);
+        }
+    }
+    
+    // 更新UI显示
+    const gestureNames = {
+        'open': '🖐️ 张手 - 球体形态',
+        'scissor': '✌️ 剪刀手 - 文字形态"我是Mok"',
+        'fist': '✊ 握拳 - 圆环形态',
+        'point': '☝️ 食指 - 星星形态',
+        'thumb_up': '👍 竖拇指 - 爱心形态'
+    };
+    
+    document.getElementById('gestureState').innerHTML = 
+        gestureNames[gesture] || '未知手势';
+    
+    updateStatus(`切换到: ${gestureNames[gesture]}`);
+}
+
+// ==================== 手势变化处理 ====================
+function onGestureChanged(newGesture) {
+    // 防止过快切换
+    const now = Date.now();
+    if (now - lastGestureTime < 500) return;
+    
+    lastGestureTime = now;
+    currentGesture = newGesture;
+    
+    // 触发爆炸过渡特效
+    triggerExplosion();
+    
+    // 切换粒子形态
+    setTimeout(() => {
+        switchParticleShape(newGesture);
+    }, 300);
+    
+    // 随机显示祝福语
+    showRandomBlessing();
+}
+
+// ==================== 爆炸过渡特效 ====================
+function triggerExplosion() {
+    isExploding = true;
+    explosionTime = 0;
+    
+    // 为所有粒子施加随机爆炸力
+    for (let i = 0; i < CONFIG.PARTICLE_COUNT; i++) {
+        const explosionForce = new THREE.Vector3(
+            (Math.random() - 0.5) * CONFIG.PHYSICS.EXPLOSION_FORCE,
+            (Math.random() - 0.5) * CONFIG.PHYSICS.EXPLOSION_FORCE,
+            (Math.random() - 0.5) * CONFIG.PHYSICS.EXPLOSION_FORCE
+        );
+        
+        particleVelocities[i].add(explosionForce);
+    }
+    
+    // 播放爆炸音效（如果有的话）
+    playExplosionSound();
+}
+
+// ==================== 播放爆炸音效 ====================
+function playExplosionSound() {
+    // 创建简单的爆破音效
+    try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.setValueAtTime(150, audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(50, audioContext.currentTime + 0.5);
+        
+        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+        
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 0.5);
+    } catch (e) {
+        console.log("无法播放音频:", e);
+    }
+}
+
+// ==================== 挥手风暴 ====================
+function applyWindForce(windX, windY, strength = 1.0) {
+    const windForce = new THREE.Vector3(
+        windX * CONFIG.PHYSICS.WIND_FORCE * strength,
+        windY * CONFIG.PHYSICS.WIND_FORCE * strength,
+        0
+    );
+    
+    // 为粒子施加风力
+    for (let i = 0; i < CONFIG.PARTICLE_COUNT; i++) {
+        particleAccelerations[i].add(windForce.clone().multiplyScalar(Math.random() * 0.5 + 0.5));
+    }
+    
+    // 显示风暴效果
+    if (strength > 1.5) {
+        updateStatus(`💨 挥手风暴！强度: ${strength.toFixed(1)}`);
+    }
+}
+
+// ==================== 初始化虚拟手 ====================
+function initVirtualHand() {
+    const handEl = document.getElementById('virtualHand');
+    
+    // 更新虚拟手位置
+    function updateHandPosition() {
+        handEl.style.left = virtualHand.x + '%';
+        handEl.style.top = virtualHand.y + '%';
+        
+        // 根据缩放调整大小
+        const size = 80 + virtualHand.scale * 40;
+        handEl.style.width = size + 'px';
+        handEl.style.height = size + 'px';
+        
+        // 更新手部图标
+        const icons = {
+            'open': '🖐️',
+            'scissor': '✌️',
+            'fist': '✊',
+            'point': '☝️',
+            'thumb_up': '👍'
         };
+        
+        handEl.textContent = icons[currentGesture] || '✋';
+        
+        // 更新调试信息
+        document.getElementById('handX').textContent = Math.round(virtualHand.x);
+        document.getElementById('handY').textContent = Math.round(virtualHand.y);
+        
+        // 根据手部缩放调整粒子系统（深度推拉）
+        const targetScale = 0.5 + (virtualHand.scale - 0.5) * 2;
+        particleSystem.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.1);
+    }
+    
+    // 初始位置
+    updateHandPosition();
+    
+    // 动画循环中更新
+    setInterval(updateHandPosition, 16);
+}
 
-        // 全局变量
-        let scene, camera, renderer, controls, particles, snowParticles;
-        let particleGeometry, particleMaterial, snowGeometry, snowMaterial;
-        let particlePositions = new Float32Array(CONFIG.particleCount * 3);
-        let particleVelocities = new Float32Array(CONFIG.particleCount * 3);
-        let particleAccelerations = new Float32Array(CONFIG.particleCount * 3);
-        let currentShape = 'tree';
-        let isWaveStorm = false;
-        let scaleFactor = 1;
-        let photoTexture = null;
-        let promptText = "我是 Mok";
-
-        // 初始化场景
-        function init() {
-            // 创建场景
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x000000);
-            
-            // 创建相机
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 5, 25);
-            
-            // 创建渲染器
-            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(window.devicePixelRatio);
-            document.getElementById('canvas-container').appendChild(renderer.domElement);
-            
-            // 控制器
-            controls = new THREE.OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true;
-            controls.dampingFactor = 0.05;
-
-            // 初始化粒子
-            initParticles();
-            // 初始化雪花（圣诞树默认显示雪花）
-            initSnow();
-            snowParticles.visible = true;
-            // 绑定事件
-            bindEvents();
-            // 启动动画循环
-            animate();
+// ==================== 物理模拟更新 ====================
+function updatePhysics() {
+    const positions = particleGeometry.attributes.position.array;
+    
+    // 处理虚拟手移动
+    if (virtualHand.isMoving) {
+        virtualHand.x += virtualHand.velocityX;
+        virtualHand.y += virtualHand.velocityY;
+        
+        // 限制在屏幕范围内
+        virtualHand.x = Math.max(5, Math.min(95, virtualHand.x));
+        virtualHand.y = Math.max(5, Math.min(95, virtualHand.y));
+        
+        // 如果正在移动且有风力，应用风力
+        if (virtualHand.windForce.x !== 0 || virtualHand.windForce.y !== 0) {
+            applyWindForce(virtualHand.windForce.x, virtualHand.windForce.y, 
+                          Math.sqrt(virtualHand.velocityX*virtualHand.velocityX + 
+                                   virtualHand.velocityY*virtualHand.velocityY) / 5);
         }
-
-        // 初始化粒子系统
-        function initParticles() {
-            // 初始化圣诞树粒子位置
-            for (let i = 0; i < CONFIG.particleCount; i++) {
-                const i3 = i * 3;
-                // 圣诞树分布（极坐标）
-                const layer = Math.random() * CONFIG.treeHeight;
-                const radius = (CONFIG.treeHeight - layer) * 0.5 * Math.random();
-                const angle = Math.random() * Math.PI * 2;
-                
-                particlePositions[i3] = Math.cos(angle) * radius;
-                particlePositions[i3 + 1] = layer - CONFIG.treeHeight/2;
-                particlePositions[i3 + 2] = Math.sin(angle) * radius;
-                
-                // 初始速度和加速度
-                particleVelocities[i3] = (Math.random() - 0.5) * 0.01;
-                particleVelocities[i3 + 1] = (Math.random() - 0.5) * 0.01;
-                particleVelocities[i3 + 2] = (Math.random() - 0.5) * 0.01;
-                
-                particleAccelerations[i3] = 0;
-                particleAccelerations[i3 + 1] = -CONFIG.gravity;
-                particleAccelerations[i3 + 2] = 0;
+    }
+    
+    for (let i = 0; i < CONFIG.PARTICLE_COUNT; i++) {
+        const i3 = i * 3;
+        
+        // 获取当前粒子位置
+        const currentPos = new THREE.Vector3(
+            positions[i3],
+            positions[i3 + 1],
+            positions[i3 + 2]
+        );
+        
+        // 获取目标位置
+        const targetPos = targetPositions[i];
+        
+        // 计算吸引力（指向目标位置）
+        const attraction = new THREE.Vector3()
+            .subVectors(targetPos, currentPos)
+            .multiplyScalar(CONFIG.PHYSICS.ATTRACTION_FORCE);
+        
+        // 更新加速度
+        particleAccelerations[i].add(attraction);
+        
+        // 应用爆炸效果（如果有）
+        if (isExploding) {
+            explosionTime += 0.016;
+            if (explosionTime > 1.0) {
+                isExploding = false;
             }
-
-            // 创建粒子几何体
-            particleGeometry = new THREE.BufferGeometry();
-            particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
-            
-            // 粒子材质
-            particleMaterial = new THREE.PointsMaterial({
-                color: CONFIG.baseColor,
-                size: 0.15,
-                sizeAttenuation: true,
-                transparent: true,
-                opacity: 0.8,
-                blending: THREE.AdditiveBlending
-            });
-
-            // 创建粒子系统
-            particles = new THREE.Points(particleGeometry, particleMaterial);
-            scene.add(particles);
         }
+        
+        // 更新速度：v = v + a * dt
+        particleVelocities[i].add(particleAccelerations[i]);
+        
+        // 应用阻尼
+        particleVelocities[i].multiplyScalar(CONFIG.PHYSICS.DAMPING);
+        
+        // 更新位置：p = p + v * dt
+        positions[i3] += particleVelocities[i].x;
+        positions[i3 + 1] += particleVelocities[i].y;
+        positions[i3 + 2] += particleVelocities[i].z;
+        
+        // 重置加速度
+        particleAccelerations[i].set(0, 0, 0);
+    }
+    
+    particleGeometry.attributes.position.needsUpdate = true;
+}
 
-        // 初始化雪花
-        function initSnow() {
-            snowGeometry = new THREE.BufferGeometry();
-            const snowPositions = new Float32Array(CONFIG.snowCount * 3);
-            
-            for (let i = 0; i < CONFIG.snowCount; i++) {
-                const i3 = i * 3;
-                snowPositions[i3] = (Math.random() - 0.5) * 40;
-                snowPositions[i3 + 1] = Math.random() * 20;
-                snowPositions[i3 + 2] = (Math.random() - 0.5) * 40;
+// ==================== 雪花效果 ====================
+function initSnowflakes() {
+    const container = document.getElementById('snowContainer');
+    
+    // 定义雪花类型
+    const snowTypes = ['❄', '❅', '❆', '•', '✦', '＊', '✧'];
+    
+    function createSnowflake() {
+        const snowflake = document.createElement('div');
+        snowflake.className = 'snowflake';
+        snowflake.innerHTML = snowTypes[Math.floor(Math.random() * snowTypes.length)];
+        
+        // 随机位置
+        snowflake.style.left = Math.random() * 100 + 'vw';
+        
+        // 随机大小
+        const size = Math.random() * 20 + 10;
+        snowflake.style.fontSize = size + 'px';
+        
+        // 随机透明度
+        snowflake.style.opacity = Math.random() * 0.5 + 0.3;
+        
+        // 随机动画时长
+        const duration = Math.random() * 10 + 5;
+        snowflake.style.animation = `fall ${duration}s linear infinite`;
+        
+        // 随机飘动
+        const sway = Math.random() * 100 - 50;
+        snowflake.style.setProperty('--sway', sway + 'px');
+        
+        container.appendChild(snowflake);
+        
+        // 雪花落地后移除
+        setTimeout(() => {
+            if (snowflake.parentNode) {
+                snowflake.remove();
             }
-            
-            snowGeometry.setAttribute('position', new THREE.BufferAttribute(snowPositions, 3));
-            snowMaterial = new THREE.PointsMaterial({
-                color: 0xffffff,
-                size: 0.2,
-                sizeAttenuation: true,
-                transparent: true,
-                opacity: 0.7
-            });
-            
-            snowParticles = new THREE.Points(snowGeometry, snowMaterial);
-            scene.add(snowParticles);
-        }
+        }, duration * 1000);
+    }
+    
+    // 创建初始雪花
+    for (let i = 0; i < 80; i++) {
+        setTimeout(createSnowflake, Math.random() * 2000);
+    }
+    
+    // 持续生成雪花
+    setInterval(createSnowflake, 300);
+}
 
-        // 触发形状爆炸过渡
-        function triggerShapeBlast(targetShape) {
-            // 爆炸力
-            for (let i = 0; i < CONFIG.particleCount; i++) {
-                const i3 = i * 3;
-                const dir = new THREE.Vector3(
-                    particlePositions[i3],
-                    particlePositions[i3 + 1],
-                    particlePositions[i3 + 2]
-                ).normalize();
-                
-                particleVelocities[i3] = dir.x * (Math.random() * CONFIG.blastForce);
-                particleVelocities[i3 + 1] = dir.y * (Math.random() * CONFIG.blastForce);
-                particleVelocities[i3 + 2] = dir.z * (Math.random() * CONFIG.blastForce);
-            }
+// ==================== 祝福语显示 ====================
+function showRandomBlessing() {
+    const blessingDisplay = document.getElementById('blessingDisplay');
+    
+    // 随机选择祝福语
+    const randomIndex = Math.floor(Math.random() * blessingWords.length);
+    const blessing = blessingWords[randomIndex];
+    
+    // 更新显示
+    blessingDisplay.textContent = blessing;
+    blessingDisplay.style.opacity = 1;
+    
+    // 添加随机颜色和动画
+    const colors = ['#ff0000', '#00ff00', '#ffff00', '#00ffff', '#ff00ff', '#ffa500'];
+    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+    blessingDisplay.style.color = randomColor;
+    blessingDisplay.style.textShadow = `0 0 20px ${randomColor}, 0 0 40px ${randomColor}`;
+    
+    // 3秒后淡出
+    setTimeout(() => {
+        blessingDisplay.style.opacity = 0;
+    }, 3000);
+}
 
-            // 延迟切换到目标形状
-            setTimeout(() => {
-                setParticleShape(targetShape);
-                // 只有圣诞树形状显示雪花
-                snowParticles.visible = targetShape === 'tree';
-            }, 300);
-        }
+// ==================== 更新提示词 ====================
+function updatePrompt() {
+    const promptInput = document.getElementById('promptInput');
+    currentPrompt = promptInput.value.trim() || "圣诞快乐，平安喜乐！";
+    
+    // 将提示词拆分为单词，添加到祝福语库
+    const words = currentPrompt.split(/[，,。.!！\s]+/).filter(w => w.length > 0);
+    if (words.length > 0) {
+        blessingWords = [...words, ...["心想事成", "幸福安康", "新年进步"]];
+    }
+    
+    updateStatus(`提示词已更新: ${currentPrompt}`);
+    showRandomBlessing();
+}
 
-        // 设置粒子形状
-        function setParticleShape(shape) {
-            currentShape = shape;
-            const positions = particleGeometry.attributes.position.array;
-            const velocities = particleVelocities;
-
-            for (let i = 0; i < CONFIG.particleCount; i++) {
-                const i3 = i * 3;
-                let x = 0, y = 0, z = 0;
-
-                switch (shape) {
-                    case 'tree': // 圣诞树
-                        const layer = Math.random() * CONFIG.treeHeight;
-                        const radius = (CONFIG.treeHeight - layer) * 0.5 * Math.random();
-                        const angle = Math.random() * Math.PI * 2;
-                        x = Math.cos(angle) * radius;
-                        y = layer - CONFIG.treeHeight/2;
-                        z = Math.sin(angle) * radius;
-                        break;
-                    
-                    case 'sphere': // 球
-                        const phi = Math.acos(-1 + (2 * i) / CONFIG.particleCount);
-                        const theta = Math.sqrt(CONFIG.particleCount * Math.PI) * phi;
-                        x = 5 * Math.cos(theta) * Math.sin(phi);
-                        y = 5 * Math.sin(theta) * Math.sin(phi);
-                        z = 5 * Math.cos(phi);
-                        break;
-                    
-                    case 'ring': // 圆环
-                        const ringAngle = Math.random() * Math.PI * 2;
-                        const ringRadius = 5 + (Math.random() - 0.5) * 0.5;
-                        x = ringRadius * Math.cos(ringAngle);
-                        y = (Math.random() - 0.5) * 2;
-                        z = ringRadius * Math.sin(ringAngle);
-                        break;
-                    
-                    case 'star': // 星
-                        const starPos = getStarPosition(i);
-                        x = starPos.x * 6;
-                        y = starPos.y * 6;
-                        z = starPos.z * 6;
-                        break;
-                    
-                    case 'heart': // 爱心
-                        const t = Math.random() * Math.PI * 2;
-                        const heartX = 16 * Math.pow(Math.sin(t), 3);
-                        const heartY = 13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t);
-                        x = heartX * 0.2;
-                        y = heartY * 0.2;
-                        z = (Math.random() - 0.5) * 2;
-                        break;
-                    
-                    case 'text': // 文字（我是 Mok）
-                        const textPos = getTextPosition(i);
-                        x = textPos.x * 3;
-                        y = textPos.y * 3;
-                        z = (Math.random() - 0.5) * 1;
-                        break;
-                }
-
-                // 平滑过渡到目标位置
-                positions[i3] = THREE.MathUtils.lerp(positions[i3], x, 0.1);
-                positions[i3 + 1] = THREE.MathUtils.lerp(positions[i3 + 1], y, 0.1);
-                positions[i3 + 2] = THREE.MathUtils.lerp(positions[i3 + 2], z, 0.1);
-
-                // 重置速度
-                velocities[i3] = (Math.random() - 0.5) * 0.01;
-                velocities[i3 + 1] = (Math.random() - 0.5) * 0.01;
-                velocities[i3 + 2] = (Math.random() - 0.5) * 0.01;
-            }
-
-            particleGeometry.attributes.position.needsUpdate = true;
-        }
-
-        // 获取星形位置
-        function getStarPosition(index) {
-            const points = [
-                {x:0,y:1,z:0}, {x:0.2,y:0.3,z:0}, {x:0.95,y:0.3,z:0},
-                {x:0.35,y:-0.1,z:0}, {x:0.5,y:-0.8,z:0}, {x:0,y:-0.4,z:0},
-                {x:-0.5,y:-0.8,z:0}, {x:-0.35,y:-0.1,z:0}, {x:-0.95,y:0.3,z:0},
-                {x:-0.2,y:0.3,z:0}
-            ];
-            const point = points[index % points.length];
-            const angle = (index / CONFIG.particleCount) * Math.PI * 2;
-            return {
-                x: point.x * Math.cos(angle) - point.z * Math.sin(angle),
-                y: point.y,
-                z: point.x * Math.sin(angle) + point.z * Math.cos(angle)
-            };
-        }
-
-        // 获取文字位置（Canvas生成）
-        function getTextPosition(index) {
-            // 创建临时Canvas生成文字
+// ==================== 处理照片上传 ====================
+function handlePhotoUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const image = new Image();
+        image.onload = function() {
+            // 创建纹理
             const canvas = document.createElement('canvas');
-            canvas.width = 256;
-            canvas.height = 128;
             const ctx = canvas.getContext('2d');
-            ctx.fillStyle = '#ffffff';
-            ctx.font = '48px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText(promptText, 128, 64);
-
-            // 获取像素数据
-            const imageData = ctx.getImageData(0, 0, 256, 128);
-            const data = imageData.data;
-
-            // 随机取文字像素位置
-            let x = Math.floor(Math.random() * 256);
-            let y = Math.floor(Math.random() * 128);
-            let idx = (y * 256 + x) * 4;
+            canvas.width = 256;
+            canvas.height = 256;
+            ctx.drawImage(image, 0, 0, 256, 256);
             
-            // 确保取到有文字的像素
-            let attempts = 0;
-            while (data[idx] < 100 && attempts < 100) {
-                x = Math.floor(Math.random() * 256);
-                y = Math.floor(Math.random() * 128);
-                idx = (y * 256 + x) * 4;
-                attempts++;
-            }
-
-            // 归一化坐标
-            return {
-                x: (x - 128) / 40,
-                y: -(y - 64) / 40,
-                z: (Math.random() - 0.5) * 0.5
-            };
-        }
-
-        // 更新粒子物理
-        function updateParticles() {
-            const positions = particleGeometry.attributes.position.array;
-            const velocities = particleVelocities;
-            const accelerations = particleAccelerations;
-
-            for (let i = 0; i < CONFIG.particleCount; i++) {
-                const i3 = i * 3;
-
-                // 应用加速度
-                velocities[i3] += accelerations[i3];
-                velocities[i3 + 1] += accelerations[i3 + 1];
-                velocities[i3 + 2] += accelerations[i3 + 2];
-
-                // 挥手风暴力
-                if (isWaveStorm) {
-                    const angle = Math.atan2(positions[i3 + 2], positions[i3]);
-                    velocities[i3] += Math.cos(angle) * CONFIG.waveForce * (Math.random() - 0.5);
-                    velocities[i3 + 2] += Math.sin(angle) * CONFIG.waveForce * (Math.random() - 0.5);
-                    velocities[i3 + 1] += CONFIG.waveForce * (Math.random() - 0.5);
-                }
-
-                // 应用速度
-                positions[i3] += velocities[i3];
-                positions[i3 + 1] += velocities[i3 + 1];
-                positions[i3 + 2] += velocities[i3 + 2];
-
-                // 边界反弹
-                if (Math.abs(positions[i3]) > 20) velocities[i3] *= -0.8;
-                if (Math.abs(positions[i3 + 1]) > 20) velocities[i3 + 1] *= -0.8;
-                if (Math.abs(positions[i3 + 2]) > 20) velocities[i3 + 2] *= -0.8;
-
-                // 阻尼
-                velocities[i3] *= 0.98;
-                velocities[i3 + 1] *= 0.98;
-                velocities[i3 + 2] *= 0.98;
-            }
-
-            // 应用缩放
-            particles.scale.set(scaleFactor, scaleFactor, scaleFactor);
-
-            // 更新照片纹理（如果有）
-            if (photoTexture) {
-                particleMaterial.map = photoTexture;
-                particleMaterial.needsUpdate = true;
-            }
-
-            particleGeometry.attributes.position.needsUpdate = true;
-        }
-
-        // 更新雪花
-        function updateSnow() {
-            if (!snowParticles.visible) return;
+            // 更新粒子颜色基于图像
+            updateParticleColorsFromImage(canvas);
             
-            const positions = snowGeometry.attributes.position.array;
-            for (let i = 0; i < CONFIG.snowCount; i++) {
-                const i3 = i * 3;
-                // 雪花下落
-                positions[i3 + 1] -= 0.05 + Math.random() * 0.05;
-                // 左右飘动
-                positions[i3] += (Math.random() - 0.5) * 0.1;
-                
-                // 重置位置
-                if (positions[i3 + 1] < -10) {
-                    positions[i3] = (Math.random() - 0.5) * 40;
-                    positions[i3 + 1] = 20;
-                    positions[i3 + 2] = (Math.random() - 0.5) * 40;
-                }
-            }
-            snowGeometry.attributes.position.needsUpdate = true;
-        }
+            updateStatus(`照片已加载: ${file.name}`);
+        };
+        image.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+}
 
-        // 显示祝福文字
-        function showBlessing() {
-            const blessings = [
-                "圣诞快乐！", "新年快乐！", "平安喜乐！", "万事顺遂！",
-                "身体健康！", "心想事成！", "阖家幸福！", "前程似锦！"
-            ];
-            const blessing = document.getElementById('blessing');
-            const text = blessings[Math.floor(Math.random() * blessings.length)];
-            blessing.textContent = text;
-            blessing.style.left = `${Math.random() * 80 + 10}%`;
-            blessing.style.top = `${Math.random() * 80 + 10}%`;
-            blessing.style.opacity = 1;
-            blessing.style.transform = 'translate(-50%, -50%) scale(1)';
-            
+// ==================== 从图像更新粒子颜色 ====================
+function updateParticleColorsFromImage(canvas) {
+    const ctx = canvas.getContext('2d');
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+    
+    const colors = particleGeometry.attributes.color.array;
+    
+    for (let i = 0; i < CONFIG.PARTICLE_COUNT; i++) {
+        const i3 = i * 3;
+        
+        // 随机从图像中采样颜色
+        const pixelIndex = Math.floor(Math.random() * (data.length / 4)) * 4;
+        
+        colors[i3] = data[pixelIndex] / 255;     // R
+        colors[i3 + 1] = data[pixelIndex + 1] / 255; // G
+        colors[i3 + 2] = data[pixelIndex + 2] / 255; // B
+    }
+    
+    particleGeometry.attributes.color.needsUpdate = true;
+}
+
+// ==================== 重置为圣诞树 ====================
+function resetToChristmasTree() {
+    // 将目标位置重置为圣诞树形状
+    for (let i = 0; i < CONFIG.PARTICLE_COUNT; i++) {
+        // 重新计算圣诞树位置
+        const height = Math.random();
+        const angle = Math.random() * Math.PI * 2;
+        const radius = (1 - height) * 5;
+        
+        const x = Math.cos(angle) * radius * (Math.random() * 0.3 + 0.7);
+        const y = height * 10 - 2;
+        const z = Math.sin(angle) * radius * (Math.random() * 0.3 + 0.7);
+        
+        targetPositions[i].set(x, y, z);
+    }
+    
+    // 触发温和的爆炸效果
+    triggerExplosion();
+    
+    updateStatus("粒子已重置为圣诞树形态");
+}
+
+// ==================== 自动演示模式 ====================
+function startAutoDemo() {
+    let demoStep = 0;
+    const demoSteps = [
+        { gesture: 'open', duration: 3000 },
+        { gesture: 'scissor', duration: 3000 },
+        { gesture: 'fist', duration: 3000 },
+        { gesture: 'point', duration: 3000 },
+        { gesture: 'thumb_up', duration: 3000 },
+    ];
+    
+    function nextStep() {
+        if (demoStep >= demoSteps.length) {
+            demoStep = 0; // 循环
+        }
+        
+        const step = demoSteps[demoStep];
+        onGestureChanged(step.gesture);
+        
+        // 随机移动虚拟手
+        virtualHand.velocityX = (Math.random() - 0.5) * 4;
+        virtualHand.velocityY = (Math.random() - 0.5) * 4;
+        virtualHand.isMoving = true;
+        
+        // 模拟挥手风暴
+        if (Math.random() > 0.7) {
             setTimeout(() => {
-                blessing.style.opacity = 0;
-                blessing.style.transform = 'translate(-50%, -50%) scale(0.8) translateY(-20px)';
-            }, 2000);
+                applyWindForce(
+                    (Math.random() - 0.5) * 10,
+                    (Math.random() - 0.5) * 10,
+                    2.0
+                );
+            }, 1000);
         }
+        
+        demoStep++;
+        
+        // 下一步
+        setTimeout(() => {
+            virtualHand.isMoving = false;
+            virtualHand.velocityX = 0;
+            virtualHand.velocityY = 0;
+            setTimeout(nextStep, 500);
+        }, step.duration);
+    }
+    
+    nextStep();
+    updateStatus("🤖 自动演示模式已启动");
+}
 
-        // 绑定事件
-        function bindEvents() {
-            // 窗口大小调整
-            window.addEventListener('resize', () => {
-                camera.aspect = window.innerWidth / window.innerHeight;
-                camera.updateProjectionMatrix();
-                renderer.setSize(window.innerWidth, window.innerHeight);
-            });
-
-            // 点击显示祝福
-            renderer.domElement.addEventListener('click', showBlessing);
-
-            // 键盘模拟手势
-            document.addEventListener('keydown', (e) => {
-                switch (e.key.toLowerCase()) {
-                    case 'q': triggerShapeBlast('sphere'); break;
-                    case 'w': triggerShapeBlast('text'); break;
-                    case 'e': triggerShapeBlast('ring'); break;
-                    case 'r': triggerShapeBlast('star'); break;
-                    case 't': triggerShapeBlast('heart'); break;
-                    case ' ': isWaveStorm = true; break; // 空格挥手风暴
-                }
-            });
-
-            document.addEventListener('keyup', (e) => {
-                if (e.key === ' ') isWaveStorm = false;
-            });
-
-            // 滚轮深度缩放
-            document.addEventListener('wheel', (e) => {
-                scaleFactor += e.deltaY * -0.0005;
-                scaleFactor = THREE.MathUtils.clamp(scaleFactor, 0.5, 2);
-            });
-
-            // 照片上传
-            document.getElementById('photo-upload').addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    const texture = new THREE.TextureLoader().load(event.target.result);
-                    texture.needsUpdate = true;
-                    photoTexture = texture;
-                };
-                reader.readAsDataURL(file);
-            });
-
-            // 提示词修改
-            document.getElementById('control-btn').addEventListener('click', () => {
-                const input = document.getElementById('prompt-input');
-                if (input.value) {
-                    promptText = input.value;
-                    // 重新生成文字形状
-                    if (currentShape === 'text') {
-                        setParticleShape('text');
-                    }
-                }
-            });
+// ==================== 键盘控制逻辑 ====================
+function setupKeyboardControls() {
+    // 键盘按下事件
+    document.addEventListener('keydown', function(e) {
+        keysPressed[e.key.toLowerCase()] = true;
+        
+        // 防止默认行为
+        if (['1','2','3','4','5',' ','f','s','+','-'].includes(e.key.toLowerCase())) {
+            e.preventDefault();
         }
-
-        // 动画循环
-        function animate() {
-            requestAnimationFrame(animate);
-            
-            // 更新粒子
-            updateParticles();
-            // 更新雪花
-            updateSnow();
-            
-            controls.update();
-            renderer.render(scene, camera);
+        
+        // 数字键 1-5: 切换手势
+        if (e.key === '1') onGestureChanged('open');
+        if (e.key === '2') onGestureChanged('scissor');
+        if (e.key === '3') onGestureChanged('fist');
+        if (e.key === '4') onGestureChanged('point');
+        if (e.key === '5') onGestureChanged('thumb_up');
+        
+        // 空格键: 随机切换手势
+        if (e.key === ' ') {
+            const gestures = ['open', 'scissor', 'fist', 'point', 'thumb_up'];
+            const randomGesture = gestures[Math.floor(Math.random() * gestures.length)];
+            onGestureChanged(randomGesture);
         }
+        
+        // F键: 开始挥手风暴
+        if (e.key.toLowerCase() === 'f') {
+            virtualHand.windForce.x = virtualHand.velocityX * 3;
+            virtualHand.windForce.y = virtualHand.velocityY * 3;
+        }
+        
+        // S键: 切换雪花效果
+        if (e.key.toLowerCase() === 's') {
+            const snowflakes = document.querySelectorAll('.snowflake');
+            const isPaused = snowflakes[0]?.style.animationPlayState === 'paused';
+            snowflakes.forEach(snow => {
+                snow.style.animationPlayState = isPaused ? 'running' : 'paused';
+            });
+            updateStatus(isPaused ? "❄️ 雪花效果已恢复" : "❄️ 雪花效果已暂停");
+        }
+        
+        // +键: 放大虚拟手（模拟靠近）
+        if (e.key === '+' || e.key === '=') {
+            virtualHand.scale = Math.min(CONFIG.KEYBOARD.MAX_HAND_SCALE, virtualHand.scale + 0.1);
+            updateStatus(`➕ 手部放大: ${virtualHand.scale.toFixed(1)}x`);
+        }
+        
+        // -键: 缩小虚拟手（模拟远离）
+        if (e.key === '-' || e.key === '_') {
+            virtualHand.scale = Math.max(CONFIG.KEYBOARD.MIN_HAND_SCALE, virtualHand.scale - 0.1);
+            updateStatus(`➖ 手部缩小: ${virtualHand.scale.toFixed(1)}x`);
+        }
+        
+        // 方向键/WASD: 移动虚拟手
+        handleHandMovement();
+    });
+    
+    // 键盘释放事件
+    document.addEventListener('keyup', function(e) {
+        keysPressed[e.key.toLowerCase()] = false;
+        
+        // F键释放: 停止挥手风暴
+        if (e.key.toLowerCase() === 'f') {
+            virtualHand.windForce.x = 0;
+            virtualHand.windForce.y = 0;
+        }
+        
+        // 停止移动
+        if (['w','a','s','d','arrowup','arrowleft','arrowdown','arrowright'].includes(e.key.toLowerCase())) {
+            virtualHand.isMoving = false;
+            virtualHand.velocityX = 0;
+            virtualHand.velocityY = 0;
+        }
+    });
+    
+    // 鼠标点击显示祝福
+    document.addEventListener('click', function(e) {
+        if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'BUTTON') {
+            showRandomBlessing();
+        }
+    });
+}
 
-        // 启动初始化
-        window.addEventListener('load', init);
-    </script>
+// ==================== 处理虚拟手移动 ====================
+function handleHandMovement() {
+    // 重置速度
+    virtualHand.velocityX = 0;
+    virtualHand.velocityY = 0;
+    
+    // WASD 控制
+    if (keysPressed['w'] || keysPressed['arrowup']) {
+        virtualHand.velocityY = -CONFIG.KEYBOARD.HAND_SPEED;
+        virtualHand.isMoving = true;
+    }
+    if (keysPressed['s'] || keysPressed['arrowdown']) {
+        virtualHand.velocityY = CONFIG.KEYBOARD.HAND_SPEED;
+        virtualHand.isMoving = true;
+    }
+    if (keysPressed['a'] || keysPressed['arrowleft']) {
+        virtualHand.velocityX = -CONFIG.KEYBOARD.HAND_SPEED;
+        virtualHand.isMoving = true;
+    }
+    if (keysPressed['d'] || keysPressed['arrowright']) {
+        virtualHand.velocityX = CONFIG.KEYBOARD.HAND_SPEED;
+        virtualHand.isMoving = true;
+    }
+    
+    // 如果同时按下了F键，增加风力
+    if (keysPressed['f'] && virtualHand.isMoving) {
+        virtualHand.windForce.x = virtualHand.velocityX * 3;
+        virtualHand.windForce.y = virtualHand.velocityY * 3;
+        
+        // 每200ms应用一次风力
+        const now = Date.now();
+        if (now - lastWindTime > 200) {
+            applyWindForce(virtualHand.windForce.x, virtualHand.windForce.y, 1.5);
+            lastWindTime = now;
+        }
+    }
+}
+
+// ==================== 事件监听器设置 ====================
+function setupEventListeners() {
+    // 自动演示按钮
+    document.getElementById('autoDemoBtn').addEventListener('click', startAutoDemo);
+    
+    // 重置按钮
+    document.getElementById('resetBtn').addEventListener('click', resetToChristmasTree);
+    
+    // 照片上传
+    document.getElementById('photoUpload').addEventListener('change', handlePhotoUpload);
+    
+    // 更新提示词
+    document.getElementById('updatePromptBtn').addEventListener('click', updatePrompt);
+    
+    // 设置键盘控制
+    setupKeyboardControls();
+}
+
+// ==================== 帧率计算 ====================
+function updateFPS() {
+    frameCount++;
+    const now = performance.now();
+    
+    if (now >= lastTime + 1000) {
+        fps = Math.round((frameCount * 1000) / (now - lastTime));
+        document.getElementById('fps').textContent = fps;
+        frameCount = 0;
+        lastTime = now;
+    }
+}
+
+// ==================== 状态更新 ====================
+function updateStatus(message) {
+    const statusEl = document.getElementById('status');
+    statusEl.textContent = `📡 ${message}`;
+    console.log(`[系统状态] ${message}`);
+}
+
+// ==================== 窗口大小调整 ====================
+function onWindowResize() {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+}
+
+// ==================== 动画循环 ====================
+function animate() {
+    requestAnimationFrame(animate);
+    
+    // 更新物理
+    updatePhysics();
+    
+    // 更新帧率
+    updateFPS();
+    
+    // 更新控制
+    controls.update();
+    
+    // 渲染场景
+    renderer.render(scene, camera);
+}
+
+// ==================== 初始化完成 ====================
+updateStatus("🎮 键盘控制版粒子圣诞树系统就绪！");
+console.log("🎄 键盘控制版粒子圣诞树系统准备就绪！");
+</script>
 </body>
 </html>

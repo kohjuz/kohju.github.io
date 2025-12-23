@@ -3,11 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebAR粒子圣诞树互动系统</title>
+    <title>WebAR粒子圣诞树互动系统（简化版）</title>
     <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
     <script src="https://unpkg.com/three@0.160.0/examples/js/controls/OrbitControls.js"></script>
-    <script src="https://unpkg.com/@mediapipe/hands/hands.min.js"></script>
-    <script src="https://unpkg.com/@mediapipe/camera_utils/camera_utils.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { overflow: hidden; background: #000; font-family: Arial, sans-serif; }
@@ -19,8 +17,6 @@
             pointer-events: none; z-index: 99; opacity: 0; transition: opacity 0.5s, transform 1s; }
         #keyboard-hint { position: fixed; bottom: 20px; left: 20px; color: #fff; font-size: 14px;
             background: rgba(0,0,0,0.7); padding: 10px; border-radius: 5px; }
-        .loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            color: #0ff; font-size: 20px; }
     </style>
 </head>
 <body>
@@ -31,11 +27,10 @@
     </div>
     <div id="blessing"></div>
     <div id="keyboard-hint">
-        键盘模拟手势：<br>
+        键盘操作：<br>
         Q-张手(球) W-剪刀手(文字) E-握拳(圆环) R-食指(星) T-大拇指(爱心)<br>
         按住空格-挥手风暴 滚轮-深度缩放 点击-显示祝福
     </div>
-    <div class="loading" id="loading">加载中...</div>
     <div id="canvas-container"></div>
 
     <script>
@@ -62,11 +57,9 @@
         let scaleFactor = 1;
         let photoTexture = null;
         let promptText = "我是 Mok";
-        let handDetector = null;
-        let hasCamera = false;
 
         // 初始化场景
-        async function init() {
+        function init() {
             // 创建场景
             scene = new THREE.Scene();
             scene.background = new THREE.Color(0x000000);
@@ -88,14 +81,11 @@
 
             // 初始化粒子
             initParticles();
-            // 初始化雪花
+            // 初始化雪花（圣诞树默认显示雪花）
             initSnow();
-            // 初始化手势检测
-            await initHandDetection();
+            snowParticles.visible = true;
             // 绑定事件
             bindEvents();
-            
-            document.getElementById('loading').style.display = 'none';
             // 启动动画循环
             animate();
         }
@@ -166,137 +156,6 @@
             
             snowParticles = new THREE.Points(snowGeometry, snowMaterial);
             scene.add(snowParticles);
-            snowParticles.visible = false; // 初始隐藏
-        }
-
-        // 初始化手势检测
-        async function initHandDetection() {
-            try {
-                // 检测摄像头权限
-                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                hasCamera = true;
-                stream.getTracks().forEach(track => track.stop());
-
-                // 初始化MediaPipe Hands
-                handDetector = new window.mediapipe.hands.Hands({
-                    locateFile: (file) => `https://unpkg.com/@mediapipe/hands/${file}`
-                });
-
-                handDetector.setOptions({
-                    maxNumHands: 1,
-                    modelComplexity: 1,
-                    minDetectionConfidence: 0.7,
-                    minTrackingConfidence: 0.7
-                });
-
-                handDetector.onResults(handleHandResults);
-
-                // 启动摄像头（如果有）
-                const videoElement = document.createElement('video');
-                videoElement.style.display = 'none';
-                document.body.appendChild(videoElement);
-                
-                const camera = new window.mediapipe.camera_utils.Camera(videoElement, {
-                    onFrame: async () => {
-                        await handDetector.send({ image: videoElement });
-                    },
-                    width: 640,
-                    height: 480
-                });
-                camera.start();
-            } catch (e) {
-                console.log('无摄像头，启用键盘模拟:', e);
-                hasCamera = false;
-            }
-        }
-
-        // 处理手势结果
-        function handleHandResults(results) {
-            if (!results.multiHandLandmarks || !results.multiHandedness) return;
-            
-            const hand = results.multiHandLandmarks[0];
-            const handType = results.multiHandedness[0].label;
-
-            // 检测手势类型
-            const gesture = detectGesture(hand);
-            if (gesture !== currentShape) {
-                triggerShapeBlast(gesture);
-                currentShape = gesture;
-            }
-
-            // 检测手速（挥手风暴）
-            const handSpeed = calculateHandSpeed(hand);
-            isWaveStorm = handSpeed > 1.5;
-
-            // 检测手掌大小（深度缩放）
-            const palmSize = calculatePalmSize(hand);
-            scaleFactor = THREE.MathUtils.lerp(scaleFactor, palmSize * 0.1, CONFIG.scaleSpeed);
-            scaleFactor = THREE.MathUtils.clamp(scaleFactor, 0.5, 2);
-        }
-
-        // 检测手势类型
-        function detectGesture(hand) {
-            // 关键点索引：0-手腕，4-拇指尖，8-食指尖，12-中指尖，16-无名指尖，20-小指尖
-            const thumb = hand[4];
-            const index = hand[8];
-            const middle = hand[12];
-            const ring = hand[16];
-            const pinky = hand[20];
-
-            // 张手（球）：所有手指张开
-            const isOpenHand = thumb.y < hand[3].y && index.y < hand[7].y && middle.y < hand[11].y && 
-                               ring.y < hand[15].y && pinky.y < hand[19].y;
-            
-            // 剪刀手（文字）：食指+中指张开，其他闭合
-            const isScissors = index.y < hand[7].y && middle.y < hand[11].y && 
-                               thumb.y > hand[3].y && ring.y > hand[15].y && pinky.y > hand[19].y;
-            
-            // 握拳（圆环）：所有手指闭合
-            const isFist = thumb.y > hand[3].y && index.y > hand[7].y && middle.y > hand[11].y && 
-                           ring.y > hand[15].y && pinky.y > hand[19].y;
-            
-            // 食指（星）：仅食指张开
-            const isIndexOnly = index.y < hand[7].y && thumb.y > hand[3].y && middle.y > hand[11].y && 
-                               ring.y > hand[15].y && pinky.y > hand[19].y;
-            
-            // 大拇指（爱心）：仅大拇指张开
-            const isThumbOnly = thumb.y < hand[3].y && index.y > hand[7].y && middle.y > hand[11].y && 
-                               ring.y > hand[15].y && pinky.y > hand[19].y;
-
-            if (isOpenHand) return 'sphere';
-            if (isScissors) return 'text';
-            if (isFist) return 'ring';
-            if (isIndexOnly) return 'star';
-            if (isThumbOnly) return 'heart';
-            return currentShape;
-        }
-
-        // 计算手速
-        let lastHandPosition = null;
-        let lastTime = Date.now();
-        function calculateHandSpeed(hand) {
-            const now = Date.now();
-            const deltaTime = (now - lastTime) / 1000;
-            lastTime = now;
-
-            if (!lastHandPosition) {
-                lastHandPosition = { x: hand[0].x, y: hand[0].y };
-                return 0;
-            }
-
-            const dx = hand[0].x - lastHandPosition.x;
-            const dy = hand[0].y - lastHandPosition.y;
-            const speed = Math.sqrt(dx*dx + dy*dy) / deltaTime;
-            
-            lastHandPosition = { x: hand[0].x, y: hand[0].y };
-            return speed;
-        }
-
-        // 计算手掌大小
-        function calculatePalmSize(hand) {
-            const wrist = hand[0];
-            const middle = hand[9];
-            return Math.sqrt(Math.pow(wrist.x - middle.x, 2) + Math.pow(wrist.y - middle.y, 2));
         }
 
         // 触发形状爆炸过渡
@@ -318,15 +177,14 @@
             // 延迟切换到目标形状
             setTimeout(() => {
                 setParticleShape(targetShape);
-                // 圣诞树形状时显示雪花
-                if (targetShape === 'tree') {
-                    snowParticles.visible = true;
-                }
+                // 只有圣诞树形状显示雪花
+                snowParticles.visible = targetShape === 'tree';
             }, 300);
         }
 
         // 设置粒子形状
         function setParticleShape(shape) {
+            currentShape = shape;
             const positions = particleGeometry.attributes.position.array;
             const velocities = particleVelocities;
 

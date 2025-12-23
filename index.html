@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-    <title>圣诞粒子圣诞树</title>
+    <title>圣诞粒子树 - 互动版</title>
     <style>
         * {
             margin: 0;
@@ -16,12 +16,10 @@
             height: 133.33vw; /* 3:4比例 */
             background: #000;
             position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            touch-action: none;
+            font-family: "微软雅黑", sans-serif;
+            touch-action: manipulation;
         }
-        /* 雪花容器 */
+        /* 雪花背景 */
         .snow {
             position: absolute;
             top: 0;
@@ -33,19 +31,22 @@
         }
         /* 圣诞树容器 */
         .tree-container {
-            position: relative;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             width: 80%;
-            height: 80%;
-            z-index: 2;
+            height: 90%;
+            z-index: 5;
         }
-        /* 圣诞树图片 */
+        /* 基础圣诞树（背景图） */
         .christmas-tree {
             width: 100%;
             height: 100%;
-            object-fit: contain;
-            animation: rotate 5s linear infinite;
+            background: url('https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc_gen_image/dda3c3e1ebc24fa7894f33e312ae066c.jpeg~tplv-a9rns2rl98-image_dld_watermark_1_5b.png?rcl=20251223231632449464A2155B91676EAD&rk3s=8e244e95&rrcfp=ddbb2dc7&x-expires=2081863009&x-signature=EJ9A2ucEhzr4ct0BwBKjJpEmQnQ%3D') center/contain no-repeat;
+            position: relative;
         }
-        /* 螺旋粒子特效 */
+        /* 螺旋粒子层 */
         .spiral-particles {
             position: absolute;
             top: 0;
@@ -53,35 +54,33 @@
             width: 100%;
             height: 100%;
             pointer-events: none;
-            background: url('https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc_gen_image/dda3c3e1ebc24fa7894f33e312ae066c.jpeg~tplv-a9rns2rl98-image_dld_watermark_1_5b.png') no-repeat center/contain;
-            mask-image: radial-gradient(circle, black 50%, transparent 70%);
-            -webkit-mask-image: radial-gradient(circle, black 50%, transparent 70%);
-            animation: spiral-flow 5s ease-in-out infinite;
-            opacity: 0.8;
         }
         /* 烟雾特效 */
         .smoke {
             position: absolute;
-            bottom: 0;
+            top: 0;
             left: 0;
             width: 100%;
-            height: 40%;
-            background: rgba(255,255,255,0.1);
-            filter: blur(20px);
-            animation: smoke-rise 5s linear infinite;
-            z-index: 1;
+            height: 100%;
+            background: radial-gradient(circle at center, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 70%);
+            opacity: 0.6;
+            pointer-events: none;
+            z-index: 4;
+            animation: smoke-flow 8s infinite ease-in-out;
+        }
+        @keyframes smoke-flow {
+            0%,100% { transform: scale(1) translate(0, 0); opacity: 0.5; }
+            50% { transform: scale(1.05) translate(0, -5px); opacity: 0.7; }
         }
         /* 金粉特效 */
-        .gold-powder {
+        .gold-dust {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
             pointer-events: none;
-            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><circle cx="5" cy="5" r="1" fill="%23FFD700" opacity="0.8"/></svg>') repeat;
-            animation: gold-fall 5s linear infinite;
-            z-index: 2;
+            z-index: 3;
         }
         /* 祝福语弹窗 */
         .blessing {
@@ -89,108 +88,162 @@
             color: #fff;
             font-size: 16px;
             font-weight: bold;
-            text-shadow: 0 0 8px #FF0066, 0 0 12px #FFD700;
+            text-shadow: 0 0 8px #ffd700, 0 0 15px #ff4500;
             pointer-events: none;
-            animation: float-up 2s ease-out forwards;
+            animation: float-up 3s ease-out forwards;
             z-index: 10;
         }
-        /* 动画定义 */
-        @keyframes rotate {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        @keyframes spiral-flow {
-            0% { transform: scale(0.9) rotate(0deg); opacity: 0.7; }
-            50% { transform: scale(1.05) rotate(10deg); opacity: 0.9; }
-            100% { transform: scale(0.9) rotate(0deg); opacity: 0.7; }
-        }
-        @keyframes smoke-rise {
-            0% { opacity: 0.2; transform: translateY(20px); }
-            100% { opacity: 0; transform: translateY(-20px); }
-        }
-        @keyframes gold-fall {
-            0% { transform: translateY(-100%); }
-            100% { transform: translateY(100%); }
-        }
         @keyframes float-up {
-            0% { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(-50px) scale(1.2); }
+            0% { opacity: 1; transform: translate(0, 0) scale(1); }
+            100% { opacity: 0; transform: translate(0, -50px) scale(1.2); }
         }
     </style>
 </head>
 <body>
-    <!-- 雪花容器 -->
+    <!-- 雪花层 -->
     <div class="snow"></div>
-    <!-- 金粉特效 -->
-    <div class="gold-powder"></div>
+    
     <!-- 圣诞树容器 -->
     <div class="tree-container">
-        <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc_gen_image/dda3c3e1ebc24fa7894f33e312ae066c.jpeg~tplv-a9rns2rl98-image_dld_watermark_1_5b.png" alt="圣诞粒子树" class="christmas-tree">
+        <!-- 烟雾层 -->
+        <div class="smoke"></div>
+        <!-- 金粉层 -->
+        <div class="gold-dust"></div>
+        <!-- 圣诞树 -->
+        <div class="christmas-tree"></div>
+        <!-- 螺旋粒子层 -->
         <div class="spiral-particles"></div>
     </div>
-    <!-- 烟雾特效 -->
-    <div class="smoke"></div>
 
     <script>
-        // 生成雪花
+        // 1. 生成雪花
         function createSnow() {
             const snowContainer = document.querySelector('.snow');
-            for (let i = 0; i < 100; i++) {
-                const snowflake = document.createElement('div');
-                snowflake.style.position = 'absolute';
-                snowflake.style.width = `${Math.random() * 3 + 1}px`;
-                snowflake.style.height = `${Math.random() * 3 + 1}px`;
-                snowflake.style.backgroundColor = '#fff';
-                snowflake.style.borderRadius = '50%';
-                snowflake.style.left = `${Math.random() * 100}%`;
-                snowflake.style.top = `${Math.random() * -100}%`;
-                snowflake.style.opacity = (Math.random() * 0.5 + 0.3).toString();
-                snowflake.style.animation = `snow-fall ${Math.random() * 10 + 5}s linear infinite`;
-                snowContainer.appendChild(snowflake);
+            const count = 100;
+            for (let i = 0; i < count; i++) {
+                const flake = document.createElement('div');
+                flake.style.position = 'absolute';
+                flake.style.width = `${Math.random() * 3 + 1}px`;
+                flake.style.height = flake.style.width;
+                flake.style.backgroundColor = '#fff';
+                flake.style.borderRadius = '50%';
+                flake.style.left = `${Math.random() * 100}%`;
+                flake.style.top = `${Math.random() * -100}%`;
+                flake.style.opacity = `${Math.random() * 0.8 + 0.2}`;
+                flake.style.animation = `snow-fall ${Math.random() * 10 + 5}s linear infinite`;
+                flake.style.animationDelay = `${Math.random() * 5}s`;
+                snowContainer.appendChild(flake);
             }
             // 雪花下落动画
             const style = document.createElement('style');
             style.textContent = `
                 @keyframes snow-fall {
-                    0% { transform: translateY(0); }
-                    100% { transform: translateY(100vh); }
+                    0% { transform: translateY(0) rotate(0deg); }
+                    100% { transform: translateY(133.33vw) rotate(360deg); }
                 }
             `;
             document.head.appendChild(style);
         }
 
-        // 祝福语列表
+        // 2. 生成螺旋粒子
+        function createSpiralParticles() {
+            const container = document.querySelector('.spiral-particles');
+            const count = 80;
+            const radiusStep = 15; // 螺旋半径步长
+            const angleStep = 0.1; // 角度步长
+            for (let i = 0; i < count; i++) {
+                const particle = document.createElement('div');
+                const angle = i * angleStep;
+                const radius = i * radiusStep;
+                // 螺旋坐标
+                const x = container.offsetWidth/2 + Math.sin(angle) * radius;
+                const y = i * 10; // 垂直分布
+                // 粒子样式
+                particle.style.position = 'absolute';
+                particle.style.width = `${Math.random() * 3 + 1}px`;
+                particle.style.height = particle.style.width;
+                particle.style.backgroundColor = `hsl(${Math.random() * 60 + 30}, 100%, 70%)`;
+                particle.style.borderRadius = '50%';
+                particle.style.left = `${x}px`;
+                particle.style.top = `${y}px`;
+                particle.style.boxShadow = `0 0 5px ${particle.style.backgroundColor}`;
+                particle.style.opacity = '0';
+                // 粒子动画（循环划过）
+                particle.style.animation = `particle-flow 5s infinite ease-in-out ${i * 0.05}s`;
+                container.appendChild(particle);
+            }
+            // 粒子动画样式
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes particle-flow {
+                    0%, 100% { opacity: 0; transform: scale(0.5); }
+                    20%, 80% { opacity: 1; transform: scale(1.2); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // 3. 生成金粉
+        function createGoldDust() {
+            const container = document.querySelector('.gold-dust');
+            const count = 50;
+            for (let i = 0; i < count; i++) {
+                const dust = document.createElement('div');
+                dust.style.position = 'absolute';
+                dust.style.width = `${Math.random() * 2 + 0.5}px`;
+                dust.style.height = dust.style.width;
+                dust.style.backgroundColor = '#ffd700';
+                dust.style.borderRadius = '50%';
+                dust.style.left = `${Math.random() * 100}%`;
+                dust.style.top = `${Math.random() * 100}%`;
+                dust.style.opacity = `${Math.random() * 0.6 + 0.2}`;
+                dust.style.animation = `dust-float ${Math.random() * 15 + 10}s linear infinite`;
+                container.appendChild(dust);
+            }
+            // 金粉浮动动画
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes dust-float {
+                    0% { transform: translate(0, 0) rotate(0deg); }
+                    50% { transform: translate(${Math.random() * 20 - 10}px, ${Math.random() * 20 - 10}px) rotate(180deg); }
+                    100% { transform: translate(0, 0) rotate(360deg); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // 4. 点击弹出祝福语
         const blessings = [
             "圣诞快乐🎄",
             "平安喜乐✨",
             "万事顺遂🌟",
-            "幸福安康🎁",
-            "心想事成🎅",
-            "喜乐常伴☃️",
-            "阖家欢乐🥳",
-            "好运连连🍀"
+            "好运连连🍀",
+            "温暖过冬❄️",
+            "幸福安康🎁"
         ];
-
-        // 点击生成祝福语
         function showBlessing(e) {
-            const x = e.clientX || e.touches[0].clientX;
-            const y = e.clientY || e.touches[0].clientY;
             const blessing = document.createElement('div');
             blessing.className = 'blessing';
             blessing.textContent = blessings[Math.floor(Math.random() * blessings.length)];
+            // 点击位置
+            const x = e.clientX || e.touches[0].clientX;
+            const y = e.clientY || e.touches[0].clientY;
             blessing.style.left = `${x}px`;
             blessing.style.top = `${y}px`;
             document.body.appendChild(blessing);
-            setTimeout(() => blessing.remove(), 2000);
+            // 3秒后移除
+            setTimeout(() => blessing.remove(), 3000);
         }
-
-        // 初始化
-        createSnow();
         document.addEventListener('click', showBlessing);
         document.addEventListener('touchstart', (e) => {
             e.preventDefault();
             showBlessing(e);
         });
+
+        // 初始化
+        createSnow();
+        createSpiralParticles();
+        createGoldDust();
     </script>
 </body>
 </html>

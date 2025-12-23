@@ -2,1224 +2,1178 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>键盘控制版 WebAR 粒子圣诞树 | Three.js</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <!-- 使用 unpkg CDN 引入所有依赖 -->
-    <script src="https://unpkg.com/three@0.164.1/build/three.min.js"></script>
-    <script src="https://unpkg.com/three@0.164.1/examples/js/controls/OrbitControls.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✨ 超浪漫动态圣诞树 | GitHub Pages 部署版</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        /* 基础样式重置 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: 'Microsoft YaHei', sans-serif;
-            background: #000;
-            color: #fff;
-            overflow: hidden;
-            width: 100vw;
-            height: 100vh;
-            cursor: none; /* 隐藏鼠标光标 */
-        }
-        #container {
+            font-family: 'Microsoft YaHei', 'Arial Rounded MT Bold', sans-serif;
+            background: linear-gradient(135deg, #0c2b3e 0%, #1a5f7a 50%, #0a2e38 100%);
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
             position: relative;
-            width: 100%;
-            height: 100%;
+            padding: 20px;
         }
-        #threeCanvas {
-            position: absolute;
+
+        /* 雪花容器 */
+        #snowflakesContainer {
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
+            pointer-events: none;
             z-index: 1;
         }
-        #debugInfo {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 15px;
-            border-radius: 10px;
-            font-size: 14px;
-            z-index: 100;
-            max-width: 300px;
-            border: 1px solid #00ffff;
+
+        /* 容器样式 */
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 2;
         }
-        #controlPanel {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(0, 40, 60, 0.85);
-            padding: 20px;
-            border-radius: 15px;
-            z-index: 100;
-            width: 320px;
-            border: 2px solid #0af;
-            backdrop-filter: blur(5px);
-        }
-        #controlPanel h3 {
-            color: #0ff;
-            margin-bottom: 15px;
+
+        /* 头部样式 */
+        .header {
             text-align: center;
-            border-bottom: 1px solid #0ff;
-            padding-bottom: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: rgba(0, 40, 60, 0.7);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 2px solid rgba(255, 215, 0, 0.3);
         }
+
+        .header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            color: #FFD700;
+            text-shadow: 0 0 15px #FF4500;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #98FB98;
+            margin-bottom: 15px;
+        }
+
+        /* 控制按钮 */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
         .btn {
-            display: block;
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            background: linear-gradient(45deg, #0066cc, #00aaff);
+            padding: 8px 15px;
+            background: linear-gradient(135deg, #FF416C 0%, #FF4B2B 100%);
             color: white;
             border: none;
-            border-radius: 8px;
-            font-size: 16px;
+            border-radius: 50px;
+            font-size: 0.9rem;
             cursor: pointer;
-            transition: all 0.3s;
-            text-align: center;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            box-shadow: 0 3px 10px rgba(255, 65, 108, 0.4);
         }
+
         .btn:hover {
-            background: linear-gradient(45deg, #00aaff, #00ffff);
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 170, 255, 0.4);
+            box-shadow: 0 5px 15px rgba(255, 65, 108, 0.6);
         }
-        .input-group {
-            margin: 15px 0;
+
+        .btn i {
+            font-size: 0.9rem;
         }
-        .input-group label {
-            display: block;
-            margin-bottom: 5px;
-            color: #a0e0ff;
-        }
-        .input-group input, .input-group textarea {
+
+        /* 圣诞树区域 */
+        .tree-section {
+            position: relative;
             width: 100%;
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid #00aaff;
-            background: rgba(0, 20, 40, 0.8);
-            color: white;
-            font-size: 14px;
+            height: 400px;
+            margin: 30px auto;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
         }
-        .input-group textarea {
-            height: 80px;
-            resize: vertical;
+
+        #treeCanvas {
+            position: relative;
+            z-index: 3;
+            filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.5));
         }
-        #status {
+
+        .tree-shadow {
             position: absolute;
-            bottom: 20px;
+            bottom: 0;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(0, 0, 0, 0.8);
-            padding: 10px 20px;
-            border-radius: 20px;
-            z-index: 100;
-            border: 1px solid #ff0;
-            text-align: center;
-            min-width: 250px;
+            width: 200px;
+            height: 30px;
+            background: radial-gradient(ellipse at center, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0) 70%);
+            z-index: 2;
         }
-        #blessingDisplay {
+
+        /* 彩灯 */
+        .light {
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 3.5rem;
-            font-weight: bold;
-            color: #ffff00;
-            text-shadow: 0 0 20px #ff0, 0 0 40px #f0f;
-            z-index: 50;
-            opacity: 0;
+            border-radius: 50%;
             pointer-events: none;
-            text-align: center;
-            white-space: nowrap;
-            transition: opacity 0.5s;
+            z-index: 4;
+            animation: twinkle 1.5s infinite alternate;
         }
-        #loading {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: #000;
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.5; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.1); }
+        }
+
+        /* 树顶星星 */
+        .tree-star {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translate(-50%, -100%);
+            color: gold;
+            font-size: 2.5rem;
+            text-shadow: 0 0 20px gold;
+            z-index: 5;
+            animation: rotate 10s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: translate(-50%, -100%) rotate(0deg); }
+            to { transform: translate(-50%, -100%) rotate(360deg); }
+        }
+
+        /* 祝福区域 */
+        .blessing-section {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 25px 0;
+            border: 2px solid rgba(255, 215, 0, 0.2);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .blessing-section h2 {
+            text-align: center;
+            color: #FFD700;
+            margin-bottom: 15px;
+            font-size: 1.8rem;
+        }
+
+        #dynamicMessage {
+            font-size: 1.3rem;
+            text-align: center;
+            min-height: 60px;
             display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            margin: 15px 0;
+            border: 1px solid rgba(255, 215, 0, 0.1);
+            transition: all 0.5s ease;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+            box-shadow: 0 3px 10px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #2196F3 0%, #0D47A1 100%);
+            box-shadow: 0 3px 10px rgba(33, 150, 243, 0.4);
+        }
+
+        /* 祝福历史 */
+        .history-section {
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .history-section h3 {
+            color: #87CEEB;
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #historyList {
+            list-style-type: none;
+            max-height: 150px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        #historyList li {
+            padding: 8px 12px;
+            margin-bottom: 8px;
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 8px;
+            border-left: 3px solid #FFD700;
+            animation: fadeIn 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 使用说明 */
+        .instructions {
+            background: rgba(0, 40, 60, 0.5);
+            border-radius: 12px;
+            padding: 15px;
+            margin: 20px 0;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .instructions p {
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .instructions i {
+            color: #FFD700;
+        }
+
+        /* 页脚 */
+        .footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 30px;
+            background: rgba(0, 20, 40, 0.7);
+            border-radius: 15px;
+            border-top: 2px solid rgba(255, 215, 0, 0.2);
+        }
+
+        .footer p {
+            margin-bottom: 10px;
+            font-size: 1rem;
+        }
+
+        .github-info {
+            color: #87CEEB;
+            font-size: 0.9rem;
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* 弹窗 */
+        .popup-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
             justify-content: center;
             align-items: center;
             z-index: 1000;
-            font-size: 24px;
-            color: #0ff;
-            flex-direction: column;
         }
-        .snowflake {
-            position: absolute;
-            top: -20px;
-            color: white;
-            font-size: 1rem;
-            opacity: 0.8;
-            user-select: none;
-            pointer-events: none;
-            z-index: 5;
+
+        .popup-content {
+            background: linear-gradient(135deg, #1a5f7a 0%, #0a2e38 100%);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 450px;
+            width: 90%;
+            border: 3px solid #FFD700;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7);
+            animation: popupAppear 0.4s ease;
         }
-        #virtualHand {
-            position: absolute;
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(0, 170, 255, 0.8), rgba(0, 100, 200, 0.3));
-            border: 3px solid #0ff;
-            box-shadow: 0 0 30px #0ff;
-            z-index: 90;
-            pointer-events: none;
-            transform: translate(-50%, -50%);
-            transition: transform 0.1s, width 0.3s, height 0.3s;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 24px;
-            color: white;
+
+        @keyframes popupAppear {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
         }
-        #keyboardHelp {
-            position: absolute;
-            bottom: 80px;
-            left: 20px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 15px;
-            border-radius: 10px;
-            z-index: 100;
-            max-width: 400px;
-            border: 1px solid #ff9900;
+
+        .popup-content h2 {
+            color: #FFD700;
+            font-size: 2rem;
+            margin-bottom: 15px;
         }
-        .key {
-            display: inline-block;
-            background: #333;
-            color: #ff0;
-            padding: 2px 8px;
-            border-radius: 4px;
-            margin: 0 3px;
-            font-family: monospace;
-            border: 1px solid #666;
+
+        .popup-content p {
+            font-size: 1.3rem;
+            margin-bottom: 25px;
+            line-height: 1.4;
         }
-        .hand-icon {
-            font-size: 20px;
-            margin-right: 8px;
+
+        /* 雪花动画 */
+        @keyframes snowFall {
+            0% {
+                transform: translateY(-20px) translateX(0) rotate(0deg);
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(100vh) translateX(var(--sway)) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .subtitle {
+                font-size: 1rem;
+            }
+            
+            .tree-section {
+                height: 350px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .btn {
+                width: 100%;
+                max-width: 280px;
+            }
+            
+            #dynamicMessage {
+                font-size: 1.1rem;
+                min-height: 50px;
+                padding: 12px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .header, .blessing-section, .footer {
+                padding: 15px;
+            }
+            
+            .tree-section {
+                height: 300px;
+            }
+            
+            .tree-star {
+                font-size: 2rem;
+            }
         }
     </style>
 </head>
 <body>
-    <div id="loading">
-        <p>🎮 加载键盘控制版粒子圣诞树...</p>
-        <p style="font-size:16px; margin-top:20px; color:#aaa;">无需摄像头，使用键盘控制</p>
-    </div>
-
-    <div id="container">
-        <!-- Three.js 画布 -->
-        <canvas id="threeCanvas"></canvas>
-        
-        <!-- 虚拟手部指示器 -->
-        <div id="virtualHand">✋</div>
-        
-        <!-- 顶部控制面板 -->
-        <div id="controlPanel">
-            <h3>🎮 键盘控制面板</h3>
-            <button class="btn" id="autoDemoBtn">🤖 自动演示模式</button>
-            <button class="btn" id="resetBtn">🎄 重置为圣诞树</button>
-            
-            <div class="input-group">
-                <label for="photoUpload">📷 上传照片（驱动粒子）</label>
-                <input type="file" id="photoUpload" accept="image/*">
-                <p style="font-size:12px; color:#8af; margin-top:5px;">照片色彩将影响粒子外观</p>
-            </div>
-            
-            <div class="input-group">
-                <label for="promptInput">💬 自定义祝福提示词</label>
-                <textarea id="promptInput" placeholder="例如：圣诞快乐，平安喜乐！">圣诞快乐，平安喜乐！</textarea>
-            </div>
-            
-            <button class="btn" id="updatePromptBtn">✨ 更新提示词</button>
-            
-            <div class="input-group">
-                <label>🎯 当前手势状态</label>
-                <div id="gestureState" style="padding:10px; background:rgba(0,50,100,0.5); border-radius:5px; margin-top:5px;">
-                    等待键盘输入...
-                </div>
-            </div>
-            
-            <div style="margin-top: 15px; padding: 10px; background: rgba(255,100,0,0.1); border-radius: 8px; border-left: 3px solid #ff9900;">
-                <p style="color:#ff9900; font-size: 12px; margin: 0;">💡 <strong>虚拟手控制</strong></p>
-                <p style="color:#ffcc00; font-size: 11px; margin-top: 5px;">使用 <span class="key">W A S D</span> 或 <span class="key">↑ ← ↓ →</span> 移动虚拟手</p>
-            </div>
-        </div>
-        
-        <!-- 调试信息面板 -->
-        <div id="debugInfo">
-            <h4>🔧 系统信息</h4>
-            <p>粒子数量: <span id="particleCount">16,000</span></p>
-            <p>物理模型: 速度 + 加速度</p>
-            <p>控制模式: <span style="color:#0ff">键盘控制</span></p>
-            <p>帧率: <span id="fps">0</span> FPS</p>
-            <p>虚拟手位置: X:<span id="handX">50</span>% Y:<span id="handY">50</span>%</p>
-        </div>
-        
-        <!-- 键盘帮助面板 -->
-        <div id="keyboardHelp">
-            <h4 style="color:#ff9900; margin-bottom: 10px;">⌨️ 键盘快捷键</h4>
-            <p><span class="hand-icon">🖐️</span> 张手(球) <span class="key">1</span></p>
-            <p><span class="hand-icon">✌️</span> 剪刀手(文字) <span class="key">2</span></p>
-            <p><span class="hand-icon">✊</span> 握拳(圆环) <span class="key">3</span></p>
-            <p><span class="hand-icon">☝️</span> 食指(星) <span class="key">4</span></p>
-            <p><span class="hand-icon">👍</span> 竖拇指(心) <span class="key">5</span></p>
-            <p><span class="hand-icon">💨</span> 挥手风暴 <span class="key">F</span> + 方向键</p>
-            <p><span class="hand-icon">➕</span> 放大(靠近) <span class="key">+</span></p>
-            <p><span class="hand-icon">➖</span> 缩小(远离) <span class="key">-</span></p>
-            <p><span class="hand-icon">🌀</span> 随机切换 <span class="key">空格</span></p>
-            <p><span class="hand-icon">❄️</span> 雪花开关 <span class="key">S</span></p>
-        </div>
-        
-        <!-- 祝福语显示 -->
-        <div id="blessingDisplay"></div>
-        
-        <!-- 系统状态栏 -->
-        <div id="status">使用数字键 1-5 切换粒子形态</div>
-    </div>
-
     <!-- 雪花容器 -->
-    <div id="snowContainer"></div>
-
-<script>
-// ==================== 全局变量与配置 ====================
-const CONFIG = {
-    PARTICLE_COUNT: 16000,         // 粒子总数
-    PARTICLE_COLOR: 0x00ffff,      // 青色
-    PHYSICS: {
-        DAMPING: 0.95,             // 速度阻尼
-        ATTRACTION_FORCE: 0.02,    // 形态吸引力
-        EXPLOSION_FORCE: 3.0,      // 爆炸过渡力
-        WIND_FORCE: 0.8,           // 挥手风力 (增强)
-    },
-    GESTURE: {
-        OPEN_HAND: 'open',         // 张手
-        SCISSOR: 'scissor',        // 剪刀手
-        FIST: 'fist',              // 握拳
-        POINT: 'point',            // 食指
-        THUMB_UP: 'thumb_up',      // 竖拇指
-    },
-    KEYBOARD: {
-        HAND_SPEED: 8,             // 虚拟手移动速度
-        MAX_HAND_SCALE: 2.0,       // 最大手部缩放
-        MIN_HAND_SCALE: 0.5,       // 最小手部缩放
-    }
-};
-
-// 核心 Three.js 变量
-let scene, camera, renderer, controls, particleSystem;
-let particleGeometry, particleMaterial;
-
-// 系统状态变量
-let currentGesture = null;
-let lastGestureTime = 0;
-let isExploding = false;
-let explosionTime = 0;
-let blessingWords = ["圣诞快乐", "平安喜乐", "心想事成", "幸福安康", "新年进步"];
-let currentPrompt = "圣诞快乐，平安喜乐！";
-let uploadedTexture = null;
-
-// 物理粒子数据
-let particlePositions, particleVelocities, particleAccelerations;
-let targetPositions = []; // 目标位置（用于形态变换）
-
-// 虚拟手状态
-let virtualHand = {
-    x: 50,      // 屏幕百分比位置 X (0-100)
-    y: 50,      // 屏幕百分比位置 Y (0-100)
-    scale: 1.0, // 手部缩放 (模拟深度)
-    velocityX: 0,
-    velocityY: 0,
-    isMoving: false,
-    windForce: { x: 0, y: 0 }
-};
-
-// 按键状态跟踪
-let keysPressed = {};
-let lastWindTime = 0;
-
-// 帧率计算
-let frameCount = 0, lastTime = 0, fps = 0;
-
-// ==================== 主初始化函数 ====================
-window.onload = function() {
-    console.log("开始初始化键盘控制版粒子圣诞树系统...");
-    initThreeJS();
-    createParticleSystem();
-    initSnowflakes();
-    setupEventListeners();
-    initVirtualHand();
-    animate();
+    <div id="snowflakesContainer"></div>
     
-    // 隐藏加载界面
-    setTimeout(() => {
-        document.getElementById('loading').style.display = 'none';
-        showRandomBlessing();
-    }, 1500);
-    
-    updateStatus("系统就绪！使用数字键 1-5 切换粒子形态");
-};
-
-// ==================== Three.js 初始化 ====================
-function initThreeJS() {
-    // 创建场景
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x000011);
-    scene.fog = new THREE.Fog(0x000033, 10, 50);
-    
-    // 创建相机
-    camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 5, 15);
-    
-    // 创建渲染器
-    const threeCanvas = document.getElementById('threeCanvas');
-    renderer = new THREE.WebGLRenderer({ canvas: threeCanvas, alpha: true, antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(window.devicePixelRatio);
-    renderer.shadowMap.enabled = true;
-    
-    // 添加轨道控制（调试用）
-    controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    
-    // 添加环境光
-    const ambientLight = new THREE.AmbientLight(0x222244);
-    scene.add(ambientLight);
-    
-    // 添加方向光
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-    directionalLight.position.set(10, 20, 5);
-    directionalLight.castShadow = true;
-    scene.add(directionalLight);
-    
-    // 添加点光源（粒子高光）
-    const pointLight = new THREE.PointLight(0x00ffff, 2, 50);
-    pointLight.position.set(0, 10, 0);
-    scene.add(pointLight);
-    
-    // 窗口大小调整事件
-    window.addEventListener('resize', onWindowResize);
-    
-    updateStatus("Three.js 场景初始化完成");
-}
-
-// ==================== 创建粒子系统 ====================
-function createParticleSystem() {
-    // 创建粒子几何体
-    particleGeometry = new THREE.BufferGeometry();
-    
-    // 初始化粒子位置、速度、加速度数组
-    const positions = new Float32Array(CONFIG.PARTICLE_COUNT * 3);
-    const colors = new Float32Array(CONFIG.PARTICLE_COUNT * 3);
-    particleVelocities = new Array(CONFIG.PARTICLE_COUNT);
-    particleAccelerations = new Array(CONFIG.PARTICLE_COUNT);
-    targetPositions = new Array(CONFIG.PARTICLE_COUNT);
-    
-    // 圣诞树形状的目标位置（圆锥形）
-    for (let i = 0; i < CONFIG.PARTICLE_COUNT; i++) {
-        const i3 = i * 3;
-        
-        // 在圆锥范围内随机生成位置
-        const height = Math.random(); // 0到1的高度
-        const angle = Math.random() * Math.PI * 2;
-        const radius = (1 - height) * 5; // 越往上半径越小
-        
-        // 目标位置：圣诞树形状
-        const x = Math.cos(angle) * radius * (Math.random() * 0.3 + 0.7);
-        const y = height * 10 - 2; // 总高10个单位，底部在y=-2
-        const z = Math.sin(angle) * radius * (Math.random() * 0.3 + 0.7);
-        
-        targetPositions[i] = new THREE.Vector3(x, y, z);
-        
-        // 初始位置：随机分散在空间
-        positions[i3] = (Math.random() - 0.5) * 20;
-        positions[i3 + 1] = (Math.random() - 0.5) * 20;
-        positions[i3 + 2] = (Math.random() - 0.5) * 20;
-        
-        // 青色系颜色
-        colors[i3] = 0.0;      // R
-        colors[i3 + 1] = 1.0;  // G
-        colors[i3 + 2] = 1.0;  // B
-        
-        // 初始化速度和加速度
-        particleVelocities[i] = new THREE.Vector3(0, 0, 0);
-        particleAccelerations[i] = new THREE.Vector3(0, 0, 0);
-    }
-    
-    particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-    
-    // 创建粒子材质
-    particleMaterial = new THREE.PointsMaterial({
-        size: 0.08,
-        vertexColors: true,
-        transparent: true,
-        opacity: 0.9,
-        blending: THREE.AdditiveBlending,
-        sizeAttenuation: true
-    });
-    
-    // 创建粒子系统
-    particleSystem = new THREE.Points(particleGeometry, particleMaterial);
-    scene.add(particleSystem);
-    
-    // 预定义其他形态的目标位置
-    defineParticleShapes();
-    
-    updateStatus(`已创建 ${CONFIG.PARTICLE_COUNT.toLocaleString()} 个流体粒子`);
-}
-
-// ==================== 定义粒子形态 ====================
-function defineParticleShapes() {
-    // 形态1：球体（张手）
-    particleTargets = particleTargets || {};
-    particleTargets.sphere = [];
-    for (let i = 0; i < CONFIG.PARTICLE_COUNT; i++) {
-        const phi = Math.acos(2 * Math.random() - 1);
-        const theta = Math.random() * Math.PI * 2;
-        const radius = 4;
-        
-        const x = radius * Math.sin(phi) * Math.cos(theta);
-        const y = radius * Math.sin(phi) * Math.sin(theta);
-        const z = radius * Math.cos(phi);
-        
-        particleTargets.sphere[i] = new THREE.Vector3(x, y, z);
-    }
-    
-    // 形态2：文字（剪刀手）- "我是 Mok"
-    particleTargets.text = [];
-    // 创建文字形状的粒子分布
-    for (let i = 0; i < CONFIG.PARTICLE_COUNT; i++) {
-        // 创建简单的文字形状
-        let x = 0, y = 0, z = 0;
-        
-        // 根据位置创建"MOK"字样（简化版）
-        const charWidth = 12;
-        const charHeight = 8;
-        const charSpacing = 3;
-        
-        // 将粒子分配到三个字母
-        const letterIndex = Math.floor(i / (CONFIG.PARTICLE_COUNT / 3));
-        const particleInLetter = i % (CONFIG.PARTICLE_COUNT / 3);
-        
-        // 为每个字母创建不同的形状
-        if (letterIndex === 0) { // M
-            x = (Math.random() - 0.5) * charWidth - (charWidth + charSpacing);
-            y = (Math.random() - 0.5) * charHeight;
-            // M的形状：两竖加两个斜线
-            const inM = (Math.abs(x) < 1.5 && y > -2 && y < 2) || 
-                       (Math.abs(x + 3) < 1 && y > -2 && y < 2) || 
-                       (Math.abs(x - 3) < 1 && y > -2 && y < 2) ||
-                       (Math.abs(x) < 4 && Math.abs(y - x/2) < 0.5 && x > -3 && x < 0) ||
-                       (Math.abs(x) < 4 && Math.abs(y + x/2) < 0.5 && x > 0 && x < 3);
+    <!-- 主容器 -->
+    <div class="container">
+        <header class="header">
+            <h1><i class="fas fa-star"></i> 超浪漫动态圣诞树 <i class="fas fa-star"></i></h1>
+            <p class="subtitle">✨ 专为 GitHub Pages 部署优化 · 手机/微信可直接访问 ✨</p>
             
-            if (!inM && Math.random() > 0.3) {
-                // 不在字母内的粒子分散
-                x = (Math.random() - 0.5) * 20;
-                y = (Math.random() - 0.5) * 20;
-                z = (Math.random() - 0.5) * 10;
-            }
-        } else if (letterIndex === 1) { // O
-            x = (Math.random() - 0.5) * charWidth;
-            y = (Math.random() - 0.5) * charHeight;
-            // O的形状：圆环
-            const dist = Math.sqrt(x*x + y*y);
-            const inO = dist > 2 && dist < 4;
+            <div class="controls">
+                <button id="musicToggle" class="btn">
+                    <i class="fas fa-music"></i> <span>音乐: 开启</span>
+                </button>
+                <button id="snowToggle" class="btn">
+                    <i class="fas fa-snowflake"></i> <span>雪花: 开启</span>
+                </button>
+                <button id="lightsToggle" class="btn">
+                    <i class="fas fa-lightbulb"></i> <span>彩灯: 开启</span>
+                </button>
+            </div>
+        </header>
+
+        <main>
+            <!-- 圣诞树区域 -->
+            <section class="tree-section">
+                <div class="tree-star"><i class="fas fa-star"></i></div>
+                <canvas id="treeCanvas"></canvas>
+                <div class="tree-shadow"></div>
+            </section>
             
-            if (!inO && Math.random() > 0.3) {
-                x = (Math.random() - 0.5) * 20;
-                y = (Math.random() - 0.5) * 20;
-                z = (Math.random() - 0.5) * 10;
-            }
-        } else { // K
-            x = (Math.random() - 0.5) * charWidth + (charWidth + charSpacing);
-            y = (Math.random() - 0.5) * charHeight;
-            // K的形状：一竖加两个斜线
-            const inK = (Math.abs(x) < 1 && y > -3 && y < 3) || 
-                       (Math.abs(y - x) < 1 && x > 0 && x < 4 && y > -2 && y < 4) ||
-                       (Math.abs(y + x) < 1 && x > 0 && x < 4 && y > -4 && y < 2);
+            <!-- 祝福区域 -->
+            <section class="blessing-section">
+                <h2><i class="fas fa-heart"></i> 圣诞祝福 <i class="fas fa-heart"></i></h2>
+                <div id="dynamicMessage">点击下方按钮获取你的专属圣诞祝福！</div>
+                
+                <div class="action-buttons">
+                    <button id="newBlessing" class="btn btn-primary">
+                        <i class="fas fa-gift"></i> 获取新祝福
+                    </button>
+                    <button id="shareButton" class="btn btn-secondary">
+                        <i class="fas fa-share-alt"></i> 分享给朋友
+                    </button>
+                </div>
+                
+                <div class="history-section">
+                    <h3><i class="fas fa-history"></i> 祝福记录</h3>
+                    <ul id="historyList"></ul>
+                </div>
+            </section>
             
-            if (!inK && Math.random() > 0.3) {
-                x = (Math.random() - 0.5) * 20;
-                y = (Math.random() - 0.5) * 20;
-                z = (Math.random() - 0.5) * 10;
-            }
-        }
-        
-        particleTargets.text[i] = new THREE.Vector3(x * 0.5, y * 0.5, z);
-    }
-    
-    // 形态3：圆环（握拳）
-    particleTargets.ring = [];
-    for (let i = 0; i < CONFIG.PARTICLE_COUNT; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const radius = 5;
-        const width = 0.5;
-        
-        const x = Math.cos(angle) * (radius + (Math.random() - 0.5) * width);
-        const y = (Math.random() - 0.5) * 0.5;
-        const z = Math.sin(angle) * (radius + (Math.random() - 0.5) * width);
-        
-        particleTargets.ring[i] = new THREE.Vector3(x, y, z);
-    }
-    
-    // 形态4：星星（食指）
-    particleTargets.star = [];
-    for (let i = 0; i < CONFIG.PARTICLE_COUNT; i++) {
-        // 生成五角星形状的粒子分布
-        const points = 5;
-        const pointIndex = Math.floor(Math.random() * points);
-        const angle = pointIndex * (Math.PI * 2 / points);
-        
-        // 五角星内外点
-        const isOuter = Math.random() > 0.5;
-        const radius = isOuter ? 4 : 2;
-        
-        const x = Math.cos(angle) * radius;
-        const y = Math.sin(angle) * radius;
-        const z = (Math.random() - 0.5) * 1;
-        
-        particleTargets.star[i] = new THREE.Vector3(x, y, z);
-    }
-    
-    // 形态5：爱心（竖大拇指）
-    particleTargets.heart = [];
-    for (let i = 0; i < CONFIG.PARTICLE_COUNT; i++) {
-        // 心形参数方程 (简化版)
-        const t = Math.random() * Math.PI * 2;
-        const scale = 3;
-        
-        const x = scale * 16 * Math.pow(Math.sin(t), 3);
-        const y = scale * (13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
-        const z = (Math.random() - 0.5) * 2;
-        
-        particleTargets.heart[i] = new THREE.Vector3(x * 0.015, -y * 0.015 + 1.5, z);
-    }
-}
+            <!-- 使用说明 -->
+            <section class="instructions">
+                <p><i class="fas fa-mobile-alt"></i> <strong>手机使用：</strong>轻触圣诞树可交互，长按可保存图片</p>
+                <p><i class="fas fa-laptop"></i> <strong>电脑使用：</strong>鼠标悬停在圣诞树上有更多效果</p>
+                <p><i class="fas fa-exclamation-circle"></i> <strong>温馨提示：</strong>首次加载可能需要几秒钟时间</p>
+            </section>
+        </main>
 
-// ==================== 切换粒子形态 ====================
-function switchParticleShape(gesture) {
-    const shapeMap = {
-        'open': 'sphere',
-        'scissor': 'text',
-        'fist': 'ring',
-        'point': 'star',
-        'thumb_up': 'heart'
-    };
-    
-    const targetShape = shapeMap[gesture];
-    if (!targetShape || !particleTargets[targetShape]) {
-        console.warn(`未知的粒子形态: ${gesture}`);
-        return;
-    }
-    
-    // 更新目标位置
-    for (let i = 0; i < CONFIG.PARTICLE_COUNT; i++) {
-        if (particleTargets[targetShape][i]) {
-            targetPositions[i].copy(particleTargets[targetShape][i]);
-        }
-    }
-    
-    // 更新UI显示
-    const gestureNames = {
-        'open': '🖐️ 张手 - 球体形态',
-        'scissor': '✌️ 剪刀手 - 文字形态"我是Mok"',
-        'fist': '✊ 握拳 - 圆环形态',
-        'point': '☝️ 食指 - 星星形态',
-        'thumb_up': '👍 竖拇指 - 爱心形态'
-    };
-    
-    document.getElementById('gestureState').innerHTML = 
-        gestureNames[gesture] || '未知手势';
-    
-    updateStatus(`切换到: ${gestureNames[gesture]}`);
-}
+        <footer class="footer">
+            <p>🎄 圣诞快乐 · 愿平安喜乐常伴 🎄</p>
+            <p class="github-info">
+                <i class="fab fa-github"></i> 本页面已为 GitHub Pages 优化<br>
+                部署后可通过链接直接分享给朋友
+            </p>
+        </footer>
+    </div>
 
-// ==================== 手势变化处理 ====================
-function onGestureChanged(newGesture) {
-    // 防止过快切换
-    const now = Date.now();
-    if (now - lastGestureTime < 500) return;
-    
-    lastGestureTime = now;
-    currentGesture = newGesture;
-    
-    // 触发爆炸过渡特效
-    triggerExplosion();
-    
-    // 切换粒子形态
-    setTimeout(() => {
-        switchParticleShape(newGesture);
-    }, 300);
-    
-    // 随机显示祝福语
-    showRandomBlessing();
-}
+    <!-- 祝福弹窗 -->
+    <div id="blessingPopup" class="popup-overlay">
+        <div class="popup-content">
+            <h2 id="popupTitle">圣诞快乐！</h2>
+            <p id="popupMessage">愿你的圣诞充满温馨与喜悦</p>
+            <button id="closePopup" class="btn">关闭弹窗</button>
+        </div>
+    </div>
 
-// ==================== 爆炸过渡特效 ====================
-function triggerExplosion() {
-    isExploding = true;
-    explosionTime = 0;
-    
-    // 为所有粒子施加随机爆炸力
-    for (let i = 0; i < CONFIG.PARTICLE_COUNT; i++) {
-        const explosionForce = new THREE.Vector3(
-            (Math.random() - 0.5) * CONFIG.PHYSICS.EXPLOSION_FORCE,
-            (Math.random() - 0.5) * CONFIG.PHYSICS.EXPLOSION_FORCE,
-            (Math.random() - 0.5) * CONFIG.PHYSICS.EXPLOSION_FORCE
-        );
-        
-        particleVelocities[i].add(explosionForce);
-    }
-    
-    // 播放爆炸音效（如果有的话）
-    playExplosionSound();
-}
+    <!-- 音频（使用免版税音乐） -->
+    <audio id="bgMusic" loop preload="auto">
+        <source src="https://assets.mixkit.co/music/preview/mixkit-christmas-sleigh-bells-229.mp3" type="audio/mpeg">
+    </audio>
 
-// ==================== 播放爆炸音效 ====================
-function playExplosionSound() {
-    // 创建简单的爆破音效
-    try {
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        const oscillator = audioContext.createOscillator();
-        const gainNode = audioContext.createGain();
-        
-        oscillator.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        
-        oscillator.frequency.setValueAtTime(150, audioContext.currentTime);
-        oscillator.frequency.exponentialRampToValueAtTime(50, audioContext.currentTime + 0.5);
-        
-        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-        
-        oscillator.start();
-        oscillator.stop(audioContext.currentTime + 0.5);
-    } catch (e) {
-        console.log("无法播放音频:", e);
-    }
-}
-
-// ==================== 挥手风暴 ====================
-function applyWindForce(windX, windY, strength = 1.0) {
-    const windForce = new THREE.Vector3(
-        windX * CONFIG.PHYSICS.WIND_FORCE * strength,
-        windY * CONFIG.PHYSICS.WIND_FORCE * strength,
-        0
-    );
-    
-    // 为粒子施加风力
-    for (let i = 0; i < CONFIG.PARTICLE_COUNT; i++) {
-        particleAccelerations[i].add(windForce.clone().multiplyScalar(Math.random() * 0.5 + 0.5));
-    }
-    
-    // 显示风暴效果
-    if (strength > 1.5) {
-        updateStatus(`💨 挥手风暴！强度: ${strength.toFixed(1)}`);
-    }
-}
-
-// ==================== 初始化虚拟手 ====================
-function initVirtualHand() {
-    const handEl = document.getElementById('virtualHand');
-    
-    // 更新虚拟手位置
-    function updateHandPosition() {
-        handEl.style.left = virtualHand.x + '%';
-        handEl.style.top = virtualHand.y + '%';
-        
-        // 根据缩放调整大小
-        const size = 80 + virtualHand.scale * 40;
-        handEl.style.width = size + 'px';
-        handEl.style.height = size + 'px';
-        
-        // 更新手部图标
-        const icons = {
-            'open': '🖐️',
-            'scissor': '✌️',
-            'fist': '✊',
-            'point': '☝️',
-            'thumb_up': '👍'
-        };
-        
-        handEl.textContent = icons[currentGesture] || '✋';
-        
-        // 更新调试信息
-        document.getElementById('handX').textContent = Math.round(virtualHand.x);
-        document.getElementById('handY').textContent = Math.round(virtualHand.y);
-        
-        // 根据手部缩放调整粒子系统（深度推拉）
-        const targetScale = 0.5 + (virtualHand.scale - 0.5) * 2;
-        particleSystem.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.1);
-    }
-    
-    // 初始位置
-    updateHandPosition();
-    
-    // 动画循环中更新
-    setInterval(updateHandPosition, 16);
-}
-
-// ==================== 物理模拟更新 ====================
-function updatePhysics() {
-    const positions = particleGeometry.attributes.position.array;
-    
-    // 处理虚拟手移动
-    if (virtualHand.isMoving) {
-        virtualHand.x += virtualHand.velocityX;
-        virtualHand.y += virtualHand.velocityY;
-        
-        // 限制在屏幕范围内
-        virtualHand.x = Math.max(5, Math.min(95, virtualHand.x));
-        virtualHand.y = Math.max(5, Math.min(95, virtualHand.y));
-        
-        // 如果正在移动且有风力，应用风力
-        if (virtualHand.windForce.x !== 0 || virtualHand.windForce.y !== 0) {
-            applyWindForce(virtualHand.windForce.x, virtualHand.windForce.y, 
-                          Math.sqrt(virtualHand.velocityX*virtualHand.velocityX + 
-                                   virtualHand.velocityY*virtualHand.velocityY) / 5);
-        }
-    }
-    
-    for (let i = 0; i < CONFIG.PARTICLE_COUNT; i++) {
-        const i3 = i * 3;
-        
-        // 获取当前粒子位置
-        const currentPos = new THREE.Vector3(
-            positions[i3],
-            positions[i3 + 1],
-            positions[i3 + 2]
-        );
-        
-        // 获取目标位置
-        const targetPos = targetPositions[i];
-        
-        // 计算吸引力（指向目标位置）
-        const attraction = new THREE.Vector3()
-            .subVectors(targetPos, currentPos)
-            .multiplyScalar(CONFIG.PHYSICS.ATTRACTION_FORCE);
-        
-        // 更新加速度
-        particleAccelerations[i].add(attraction);
-        
-        // 应用爆炸效果（如果有）
-        if (isExploding) {
-            explosionTime += 0.016;
-            if (explosionTime > 1.0) {
-                isExploding = false;
-            }
-        }
-        
-        // 更新速度：v = v + a * dt
-        particleVelocities[i].add(particleAccelerations[i]);
-        
-        // 应用阻尼
-        particleVelocities[i].multiplyScalar(CONFIG.PHYSICS.DAMPING);
-        
-        // 更新位置：p = p + v * dt
-        positions[i3] += particleVelocities[i].x;
-        positions[i3 + 1] += particleVelocities[i].y;
-        positions[i3 + 2] += particleVelocities[i].z;
-        
-        // 重置加速度
-        particleAccelerations[i].set(0, 0, 0);
-    }
-    
-    particleGeometry.attributes.position.needsUpdate = true;
-}
-
-// ==================== 雪花效果 ====================
-function initSnowflakes() {
-    const container = document.getElementById('snowContainer');
-    
-    // 定义雪花类型
-    const snowTypes = ['❄', '❅', '❆', '•', '✦', '＊', '✧'];
-    
-    function createSnowflake() {
-        const snowflake = document.createElement('div');
-        snowflake.className = 'snowflake';
-        snowflake.innerHTML = snowTypes[Math.floor(Math.random() * snowTypes.length)];
-        
-        // 随机位置
-        snowflake.style.left = Math.random() * 100 + 'vw';
-        
-        // 随机大小
-        const size = Math.random() * 20 + 10;
-        snowflake.style.fontSize = size + 'px';
-        
-        // 随机透明度
-        snowflake.style.opacity = Math.random() * 0.5 + 0.3;
-        
-        // 随机动画时长
-        const duration = Math.random() * 10 + 5;
-        snowflake.style.animation = `fall ${duration}s linear infinite`;
-        
-        // 随机飘动
-        const sway = Math.random() * 100 - 50;
-        snowflake.style.setProperty('--sway', sway + 'px');
-        
-        container.appendChild(snowflake);
-        
-        // 雪花落地后移除
-        setTimeout(() => {
-            if (snowflake.parentNode) {
-                snowflake.remove();
-            }
-        }, duration * 1000);
-    }
-    
-    // 创建初始雪花
-    for (let i = 0; i < 80; i++) {
-        setTimeout(createSnowflake, Math.random() * 2000);
-    }
-    
-    // 持续生成雪花
-    setInterval(createSnowflake, 300);
-}
-
-// ==================== 祝福语显示 ====================
-function showRandomBlessing() {
-    const blessingDisplay = document.getElementById('blessingDisplay');
-    
-    // 随机选择祝福语
-    const randomIndex = Math.floor(Math.random() * blessingWords.length);
-    const blessing = blessingWords[randomIndex];
-    
-    // 更新显示
-    blessingDisplay.textContent = blessing;
-    blessingDisplay.style.opacity = 1;
-    
-    // 添加随机颜色和动画
-    const colors = ['#ff0000', '#00ff00', '#ffff00', '#00ffff', '#ff00ff', '#ffa500'];
-    const randomColor = colors[Math.floor(Math.random() * colors.length)];
-    blessingDisplay.style.color = randomColor;
-    blessingDisplay.style.textShadow = `0 0 20px ${randomColor}, 0 0 40px ${randomColor}`;
-    
-    // 3秒后淡出
-    setTimeout(() => {
-        blessingDisplay.style.opacity = 0;
-    }, 3000);
-}
-
-// ==================== 更新提示词 ====================
-function updatePrompt() {
-    const promptInput = document.getElementById('promptInput');
-    currentPrompt = promptInput.value.trim() || "圣诞快乐，平安喜乐！";
-    
-    // 将提示词拆分为单词，添加到祝福语库
-    const words = currentPrompt.split(/[，,。.!！\s]+/).filter(w => w.length > 0);
-    if (words.length > 0) {
-        blessingWords = [...words, ...["心想事成", "幸福安康", "新年进步"]];
-    }
-    
-    updateStatus(`提示词已更新: ${currentPrompt}`);
-    showRandomBlessing();
-}
-
-// ==================== 处理照片上传 ====================
-function handlePhotoUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        const image = new Image();
-        image.onload = function() {
-            // 创建纹理
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            canvas.width = 256;
-            canvas.height = 256;
-            ctx.drawImage(image, 0, 0, 256, 256);
+    <script>
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('圣诞树页面开始初始化...');
             
-            // 更新粒子颜色基于图像
-            updateParticleColorsFromImage(canvas);
+            // 初始化所有组件
+            initChristmasTree();
+            initSnowflakes();
+            initBlessings();
+            initControls();
+            initInteractiveTree();
             
-            updateStatus(`照片已加载: ${file.name}`);
-        };
-        image.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-}
-
-// ==================== 从图像更新粒子颜色 ====================
-function updateParticleColorsFromImage(canvas) {
-    const ctx = canvas.getContext('2d');
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const data = imageData.data;
-    
-    const colors = particleGeometry.attributes.color.array;
-    
-    for (let i = 0; i < CONFIG.PARTICLE_COUNT; i++) {
-        const i3 = i * 3;
-        
-        // 随机从图像中采样颜色
-        const pixelIndex = Math.floor(Math.random() * (data.length / 4)) * 4;
-        
-        colors[i3] = data[pixelIndex] / 255;     // R
-        colors[i3 + 1] = data[pixelIndex + 1] / 255; // G
-        colors[i3 + 2] = data[pixelIndex + 2] / 255; // B
-    }
-    
-    particleGeometry.attributes.color.needsUpdate = true;
-}
-
-// ==================== 重置为圣诞树 ====================
-function resetToChristmasTree() {
-    // 将目标位置重置为圣诞树形状
-    for (let i = 0; i < CONFIG.PARTICLE_COUNT; i++) {
-        // 重新计算圣诞树位置
-        const height = Math.random();
-        const angle = Math.random() * Math.PI * 2;
-        const radius = (1 - height) * 5;
-        
-        const x = Math.cos(angle) * radius * (Math.random() * 0.3 + 0.7);
-        const y = height * 10 - 2;
-        const z = Math.sin(angle) * radius * (Math.random() * 0.3 + 0.7);
-        
-        targetPositions[i].set(x, y, z);
-    }
-    
-    // 触发温和的爆炸效果
-    triggerExplosion();
-    
-    updateStatus("粒子已重置为圣诞树形态");
-}
-
-// ==================== 自动演示模式 ====================
-function startAutoDemo() {
-    let demoStep = 0;
-    const demoSteps = [
-        { gesture: 'open', duration: 3000 },
-        { gesture: 'scissor', duration: 3000 },
-        { gesture: 'fist', duration: 3000 },
-        { gesture: 'point', duration: 3000 },
-        { gesture: 'thumb_up', duration: 3000 },
-    ];
-    
-    function nextStep() {
-        if (demoStep >= demoSteps.length) {
-            demoStep = 0; // 循环
-        }
-        
-        const step = demoSteps[demoStep];
-        onGestureChanged(step.gesture);
-        
-        // 随机移动虚拟手
-        virtualHand.velocityX = (Math.random() - 0.5) * 4;
-        virtualHand.velocityY = (Math.random() - 0.5) * 4;
-        virtualHand.isMoving = true;
-        
-        // 模拟挥手风暴
-        if (Math.random() > 0.7) {
+            // 显示欢迎信息
             setTimeout(() => {
-                applyWindForce(
-                    (Math.random() - 0.5) * 10,
-                    (Math.random() - 0.5) * 10,
-                    2.0
-                );
-            }, 1000);
-        }
-        
-        demoStep++;
-        
-        // 下一步
-        setTimeout(() => {
-            virtualHand.isMoving = false;
-            virtualHand.velocityX = 0;
-            virtualHand.velocityY = 0;
-            setTimeout(nextStep, 500);
-        }, step.duration);
-    }
-    
-    nextStep();
-    updateStatus("🤖 自动演示模式已启动");
-}
+                showPopup('🎄 欢迎来到动态圣诞树 🎄', '点击"获取新祝福"按钮开始体验！');
+            }, 800);
+        });
 
-// ==================== 键盘控制逻辑 ====================
-function setupKeyboardControls() {
-    // 键盘按下事件
-    document.addEventListener('keydown', function(e) {
-        keysPressed[e.key.toLowerCase()] = true;
-        
-        // 防止默认行为
-        if (['1','2','3','4','5',' ','f','s','+','-'].includes(e.key.toLowerCase())) {
-            e.preventDefault();
+        // 祝福语库
+        const blessings = [
+            { text: "🎄 圣诞快乐！愿你的生活充满爱与喜悦", color: "#FF0000" },
+            { text: "🌟 愿圣诞的星光，照亮你前行的每一步", color: "#FFD700" },
+            { text: "❤️ 平安夜，愿平安与喜乐常伴你左右", color: "#4CAF50" },
+            { text: "🎁 每一份礼物都承载着祝福，愿你收获满满", color: "#2196F3" },
+            { text: "✨ 圣诞钟声响起，愿你的梦想都能成真", color: "#9C27B0" },
+            { text: "🦌 驯鹿带着祝福，洒满你的整个世界", color: "#FF9800" },
+            { text: "☃️ 雪花飘落，愿你的心永远温暖如春", color: "#00BCD4" },
+            { text: "🎅 圣诞老人的魔法，让快乐永远伴随你", color: "#E91E63" },
+            { text: "🔔 铃儿响叮当，幸福正在敲响你的门", color: "#8BC34A" },
+            { text: "🕯️ 烛光闪烁，愿希望照亮你的每一个明天", color: "#FFC107" },
+            { text: "⛄ 雪人微笑，愿你的每一天都充满欢笑", color: "#00ACC1" },
+            { text: "🎶 圣诞歌声中，愿美好与你同行", color: "#AB47BC" }
+        ];
+
+        // 状态变量
+        let musicEnabled = true;
+        let snowEnabled = true;
+        let lightsEnabled = true;
+        let blessingHistory = [];
+        let lights = [];
+
+        // 1. 初始化圣诞树画布
+        function initChristmasTree() {
+            console.log('初始化圣诞树...');
+            const canvas = document.getElementById('treeCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 设置画布尺寸
+            function resizeCanvas() {
+                const container = canvas.parentElement;
+                canvas.width = Math.min(350, container.clientWidth);
+                canvas.height = Math.min(400, container.clientHeight);
+                drawTree();
+                
+                // 如果彩灯开启，重新创建彩灯
+                if (lightsEnabled) {
+                    setTimeout(initLights, 100);
+                }
+            }
+            
+            // 绘制圣诞树
+            function drawTree() {
+                const width = canvas.width;
+                const height = canvas.height;
+                
+                // 清空画布
+                ctx.clearRect(0, 0, width, height);
+                
+                // 绘制树干
+                const trunkWidth = width * 0.12;
+                const trunkHeight = height * 0.18;
+                const trunkX = width / 2 - trunkWidth / 2;
+                const trunkY = height - trunkHeight;
+                
+                // 树干渐变
+                const trunkGradient = ctx.createLinearGradient(trunkX, trunkY, trunkX + trunkWidth, trunkY + trunkHeight);
+                trunkGradient.addColorStop(0, '#8B4513');
+                trunkGradient.addColorStop(1, '#A0522D');
+                
+                ctx.fillStyle = trunkGradient;
+                ctx.fillRect(trunkX, trunkY, trunkWidth, trunkHeight);
+                
+                // 树干纹理
+                ctx.fillStyle = '#D2691E';
+                for (let i = 0; i < 4; i++) {
+                    const lineY = trunkY + i * (trunkHeight / 4);
+                    ctx.fillRect(trunkX, lineY, trunkWidth, 1);
+                }
+                
+                // 绘制三层树冠
+                const layers = 3;
+                
+                for (let layer = 0; layer < layers; layer++) {
+                    const layerHeight = height * 0.28;
+                    const layerWidth = width * (0.85 - layer * 0.15);
+                    const layerY = trunkY - layerHeight * (layer + 1) + height * 0.05;
+                    const layerX = width / 2 - layerWidth / 2;
+                    
+                    // 创建树冠渐变
+                    const treeGradient = ctx.createLinearGradient(
+                        layerX, layerY, 
+                        layerX + layerWidth, layerY + layerHeight
+                    );
+                    
+                    if (layer === 0) {
+                        treeGradient.addColorStop(0, '#228B22');
+                        treeGradient.addColorStop(1, '#006400');
+                    } else if (layer === 1) {
+                        treeGradient.addColorStop(0, '#32CD32');
+                        treeGradient.addColorStop(1, '#228B22');
+                    } else {
+                        treeGradient.addColorStop(0, '#7CFC00');
+                        treeGradient.addColorStop(1, '#32CD32');
+                    }
+                    
+                    // 绘制树冠三角形
+                    ctx.fillStyle = treeGradient;
+                    ctx.beginPath();
+                    ctx.moveTo(layerX, layerY + layerHeight);
+                    ctx.lineTo(layerX + layerWidth, layerY + layerHeight);
+                    ctx.lineTo(width / 2, layerY);
+                    ctx.closePath();
+                    ctx.fill();
+                    
+                    // 添加树冠纹理
+                    ctx.strokeStyle = '#90EE90';
+                    ctx.lineWidth = 1.5;
+                    
+                    const textureLines = 4;
+                    for (let i = 1; i < textureLines; i++) {
+                        const lineY = layerY + (layerHeight / textureLines) * i;
+                        const lineWidth = layerWidth * (1 - i / textureLines);
+                        const lineX = width / 2 - lineWidth / 2;
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(lineX, lineY);
+                        ctx.lineTo(lineX + lineWidth, lineY);
+                        ctx.stroke();
+                    }
+                }
+                
+                console.log('圣诞树绘制完成');
+            }
+            
+            // 初始绘制和窗口调整时重绘
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
         }
-        
-        // 数字键 1-5: 切换手势
-        if (e.key === '1') onGestureChanged('open');
-        if (e.key === '2') onGestureChanged('scissor');
-        if (e.key === '3') onGestureChanged('fist');
-        if (e.key === '4') onGestureChanged('point');
-        if (e.key === '5') onGestureChanged('thumb_up');
-        
-        // 空格键: 随机切换手势
-        if (e.key === ' ') {
-            const gestures = ['open', 'scissor', 'fist', 'point', 'thumb_up'];
-            const randomGesture = gestures[Math.floor(Math.random() * gestures.length)];
-            onGestureChanged(randomGesture);
+
+        // 2. 初始化雪花
+        function initSnowflakes() {
+            console.log('初始化雪花...');
+            const container = document.getElementById('snowflakesContainer');
+            
+            // 创建雪花样式
+            if (!document.querySelector('#snowStyles')) {
+                const snowStyles = document.createElement('style');
+                snowStyles.id = 'snowStyles';
+                snowStyles.textContent = `
+                    .snowflake {
+                        position: absolute;
+                        background: white;
+                        border-radius: 50%;
+                        pointer-events: none;
+                        filter: blur(0.8px);
+                        z-index: 1;
+                        top: -10px;
+                    }
+                `;
+                document.head.appendChild(snowStyles);
+            }
+            
+            function createSnowflake() {
+                if (!snowEnabled) return;
+                
+                const snowflake = document.createElement('div');
+                snowflake.className = 'snowflake';
+                
+                // 随机大小和透明度
+                const size = Math.random() * 5 + 2;
+                snowflake.style.width = `${size}px`;
+                snowflake.style.height = `${size}px`;
+                snowflake.style.opacity = Math.random() * 0.6 + 0.3;
+                
+                // 随机起始位置
+                snowflake.style.left = `${Math.random() * 100}vw`;
+                
+                // 随机飘动幅度
+                const sway = Math.random() * 40 - 20;
+                snowflake.style.setProperty('--sway', `${sway}px`);
+                
+                // 随机动画时长
+                const duration = Math.random() * 8 + 6;
+                snowflake.style.animation = `snowFall ${duration}s linear infinite`;
+                
+                container.appendChild(snowflake);
+                
+                // 雪花落地后移除
+                setTimeout(() => {
+                    if (snowflake.parentNode === container) {
+                        snowflake.remove();
+                    }
+                }, duration * 1000);
+            }
+            
+            // 初始创建一批雪花
+            for (let i = 0; i < 40; i++) {
+                setTimeout(() => createSnowflake(), Math.random() * 2000);
+            }
+            
+            // 持续创建雪花
+            setInterval(createSnowflake, 350);
         }
-        
-        // F键: 开始挥手风暴
-        if (e.key.toLowerCase() === 'f') {
-            virtualHand.windForce.x = virtualHand.velocityX * 3;
-            virtualHand.windForce.y = virtualHand.velocityY * 3;
+
+        // 3. 初始化彩灯
+        function initLights() {
+            console.log('初始化彩灯...');
+            const container = document.querySelector('.tree-section');
+            
+            // 移除现有彩灯
+            document.querySelectorAll('.light').forEach(light => light.remove());
+            lights = [];
+            
+            if (!lightsEnabled) return;
+            
+            const colors = [
+                '#FF0000', '#00FF00', '#FFFF00', '#1E90FF', 
+                '#FF69B4', '#FFA500', '#9370DB', '#00FFFF',
+                '#FF1493', '#00FF7F', '#FFD700', '#7B68EE'
+            ];
+            
+            const canvas = document.getElementById('treeCanvas');
+            const rect = canvas.getBoundingClientRect();
+            
+            // 创建彩灯
+            for (let i = 0; i < 35; i++) {
+                const light = document.createElement('div');
+                light.className = 'light';
+                
+                // 计算灯的位置（在树冠区域内）
+                const angle = Math.random() * Math.PI * 2;
+                const distance = Math.random() * 130 + 20;
+                
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2 - 50;
+                
+                const x = centerX + Math.cos(angle) * distance;
+                const y = centerY + Math.sin(angle) * distance;
+                
+                // 确保灯在画布范围内
+                if (x < 20 || x > rect.width - 20 || y < 20 || y > rect.height - 50) {
+                    continue;
+                }
+                
+                light.style.left = `${x}px`;
+                light.style.top = `${y}px`;
+                
+                // 随机颜色和大小
+                const color = colors[Math.floor(Math.random() * colors.length)];
+                const size = Math.random() * 10 + 6;
+                
+                light.style.width = `${size}px`;
+                light.style.height = `${size}px`;
+                light.style.backgroundColor = color;
+                light.style.boxShadow = `0 0 ${size/1.5}px ${color}`;
+                
+                // 随机闪烁动画
+                const delay = Math.random() * 2;
+                const duration = Math.random() * 1.2 + 0.8;
+                light.style.animation = `twinkle ${duration}s infinite ${delay}s alternate`;
+                
+                container.appendChild(light);
+                lights.push(light);
+            }
+            
+            console.log(`创建了 ${lights.length} 个彩灯`);
         }
-        
-        // S键: 切换雪花效果
-        if (e.key.toLowerCase() === 's') {
-            const snowflakes = document.querySelectorAll('.snowflake');
-            const isPaused = snowflakes[0]?.style.animationPlayState === 'paused';
-            snowflakes.forEach(snow => {
-                snow.style.animationPlayState = isPaused ? 'running' : 'paused';
+
+        // 4. 初始化祝福功能
+        function initBlessings() {
+            console.log('初始化祝福功能...');
+            const newBlessingBtn = document.getElementById('newBlessing');
+            const dynamicMessage = document.getElementById('dynamicMessage');
+            const historyList = document.getElementById('historyList');
+            
+            // 获取随机祝福
+            function getRandomBlessing() {
+                return blessings[Math.floor(Math.random() * blessings.length)];
+            }
+            
+            // 显示新祝福
+            function showNewBlessing() {
+                const blessing = getRandomBlessing();
+                
+                // 更新显示
+                dynamicMessage.textContent = blessing.text;
+                dynamicMessage.style.color = blessing.color;
+                dynamicMessage.style.textShadow = `0 0 8px ${blessing.color}`;
+                
+                // 添加到历史记录
+                addToHistory(blessing.text);
+                
+                // 显示弹窗
+                showPopup("🎅 圣诞祝福 🎅", blessing.text);
+                
+                // 添加动画效果
+                dynamicMessage.style.animation = 'none';
+                setTimeout(() => {
+                    dynamicMessage.style.animation = 'fadeIn 0.5s ease';
+                }, 10);
+                
+                // 触发彩灯闪烁效果
+                triggerLightTwinkle();
+            }
+            
+            // 添加到历史记录
+            function addToHistory(message) {
+                const timestamp = new Date().toLocaleTimeString([], { 
+                    hour: '2-digit', 
+                    minute: '2-digit',
+                    second: '2-digit'
+                });
+                
+                const historyItem = {
+                    message: message,
+                    time: timestamp
+                };
+                
+                blessingHistory.unshift(historyItem);
+                
+                // 保持最多8条记录
+                if (blessingHistory.length > 8) {
+                    blessingHistory.pop();
+                }
+                
+                updateHistoryDisplay();
+            }
+            
+            // 更新历史记录显示
+            function updateHistoryDisplay() {
+                historyList.innerHTML = '';
+                
+                blessingHistory.forEach(item => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<span style="color:#87CEEB; font-size:0.8rem;">${item.time}</span> - ${item.message}`;
+                    historyList.appendChild(li);
+                });
+            }
+            
+            // 触发彩灯闪烁
+            function triggerLightTwinkle() {
+                if (!lightsEnabled) return;
+                
+                lights.forEach(light => {
+                    // 随机改变一些灯的动画
+                    if (Math.random() > 0.7) {
+                        const originalAnimation = light.style.animation;
+                        light.style.animation = 'twinkle 0.3s ease 3';
+                        
+                        setTimeout(() => {
+                            light.style.animation = originalAnimation;
+                        }, 1000);
+                    }
+                });
+            }
+            
+            // 绑定事件
+            newBlessingBtn.addEventListener('click', showNewBlessing);
+            
+            // 初始显示一条祝福
+            setTimeout(() => {
+                showNewBlessing();
+            }, 1500);
+        }
+
+        // 5. 初始化控制功能
+        function initControls() {
+            console.log('初始化控制功能...');
+            const musicToggle = document.getElementById('musicToggle');
+            const snowToggle = document.getElementById('snowToggle');
+            const lightsToggle = document.getElementById('lightsToggle');
+            const shareButton = document.getElementById('shareButton');
+            const bgMusic = document.getElementById('bgMusic');
+            const closePopup = document.getElementById('closePopup');
+            const popup = document.getElementById('blessingPopup');
+            
+            // 音乐控制
+            musicToggle.addEventListener('click', function() {
+                musicEnabled = !musicEnabled;
+                const span = this.querySelector('span');
+                
+                try {
+                    if (musicEnabled) {
+                        bgMusic.play().catch(e => {
+                            console.log("音乐播放被阻止:", e);
+                            // 显示提示
+                            showPopup("提示", "点击页面任意位置后，再点击音乐按钮开启背景音乐");
+                        });
+                        span.textContent = '音乐: 开启';
+                    } else {
+                        bgMusic.pause();
+                        span.textContent = '音乐: 关闭';
+                    }
+                } catch (error) {
+                    console.error("音乐控制错误:", error);
+                }
             });
-            updateStatus(isPaused ? "❄️ 雪花效果已恢复" : "❄️ 雪花效果已暂停");
+            
+            // 雪花控制
+            snowToggle.addEventListener('click', function() {
+                snowEnabled = !snowEnabled;
+                const span = this.querySelector('span');
+                span.textContent = snowEnabled ? '雪花: 开启' : '雪花: 关闭';
+                
+                const snowflakes = document.querySelectorAll('.snowflake');
+                snowflakes.forEach(flake => {
+                    flake.style.animationPlayState = snowEnabled ? 'running' : 'paused';
+                    flake.style.opacity = snowEnabled ? '0.7' : '0';
+                });
+            });
+            
+            // 彩灯控制
+            lightsToggle.addEventListener('click', function() {
+                lightsEnabled = !lightsEnabled;
+                const span = this.querySelector('span');
+                span.textContent = lightsEnabled ? '彩灯: 开启' : '彩灯: 关闭';
+                
+                if (lightsEnabled) {
+                    initLights();
+                } else {
+                    document.querySelectorAll('.light').forEach(light => light.remove());
+                    lights = [];
+                }
+            });
+            
+            // 分享功能
+            shareButton.addEventListener('click', function() {
+                const pageUrl = window.location.href;
+                const shareText = "🎄 看看这个超美的动态圣诞树，可以获取专属圣诞祝福！";
+                
+                // 检查是否支持Web Share API
+                if (navigator.share) {
+                    navigator.share({
+                        title: '超浪漫动态圣诞树',
+                        text: shareText,
+                        url: pageUrl
+                    })
+                    .then(() => console.log('分享成功'))
+                    .catch(err => {
+                        console.log('分享失败或取消:', err);
+                        copyToClipboard(pageUrl);
+                    });
+                } else {
+                    // 备用方案：复制链接
+                    copyToClipboard(pageUrl);
+                }
+            });
+            
+            // 复制到剪贴板
+            function copyToClipboard(text) {
+                navigator.clipboard.writeText(text)
+                    .then(() => {
+                        showPopup("分享提示", "链接已复制到剪贴板！\n\n可以粘贴分享给朋友了。");
+                    })
+                    .catch(err => {
+                        console.error('复制失败:', err);
+                        // 降级方案
+                        const textArea = document.createElement('textarea');
+                        textArea.value = text;
+                        document.body.appendChild(textArea);
+                        textArea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textArea);
+                        showPopup("分享提示", "链接已复制！可以分享给朋友了。");
+                    });
+            }
+            
+            // 弹窗控制
+            closePopup.addEventListener('click', function() {
+                popup.style.display = 'none';
+            });
+            
+            // 点击弹窗外部关闭
+            popup.addEventListener('click', function(e) {
+                if (e.target === popup) {
+                    popup.style.display = 'none';
+                }
+            });
+            
+            // 尝试自动播放音乐（需要用户交互）
+            document.body.addEventListener('click', function initMusic() {
+                if (musicEnabled) {
+                    bgMusic.play().catch(e => {
+                        console.log("等待用户交互后播放音乐");
+                    });
+                }
+                document.body.removeEventListener('click', initMusic);
+            }, { once: true });
         }
-        
-        // +键: 放大虚拟手（模拟靠近）
-        if (e.key === '+' || e.key === '=') {
-            virtualHand.scale = Math.min(CONFIG.KEYBOARD.MAX_HAND_SCALE, virtualHand.scale + 0.1);
-            updateStatus(`➕ 手部放大: ${virtualHand.scale.toFixed(1)}x`);
+
+        // 6. 初始化交互式圣诞树
+        function initInteractiveTree() {
+            console.log('初始化交互功能...');
+            const canvas = document.getElementById('treeCanvas');
+            
+            // 点击圣诞树
+            canvas.addEventListener('click', function(e) {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                // 触发祝福
+                document.getElementById('newBlessing').click();
+                
+                // 添加点击效果
+                createClickEffect(x, y);
+            });
+            
+            // 触摸事件（移动端）
+            let touchTimer;
+            canvas.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                
+                const touch = e.touches[0];
+                const rect = canvas.getBoundingClientRect();
+                const x = touch.clientX - rect.left;
+                const y = touch.clientY - rect.top;
+                
+                // 长按检测（保存图片）
+                touchTimer = setTimeout(() => {
+                    saveTreeAsImage();
+                }, 800);
+                
+                // 短按触发祝福
+                setTimeout(() => {
+                    document.getElementById('newBlessing').click();
+                    createClickEffect(x, y);
+                }, 200);
+            });
+            
+            canvas.addEventListener('touchend', function() {
+                clearTimeout(touchTimer);
+            });
+            
+            // 鼠标悬停效果
+            canvas.addEventListener('mousemove', function(e) {
+                if (!lightsEnabled) return;
+                
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                // 鼠标附近的灯变亮
+                lights.forEach(light => {
+                    const lightX = parseFloat(light.style.left);
+                    const lightY = parseFloat(light.style.top);
+                    
+                    const distance = Math.sqrt(
+                        Math.pow(x - lightX, 2) + Math.pow(y - lightY, 2)
+                    );
+                    
+                    if (distance < 50) {
+                        light.style.transform = 'scale(1.3)';
+                        light.style.opacity = '1';
+                    } else {
+                        light.style.transform = 'scale(1)';
+                        light.style.opacity = '0.8';
+                    }
+                });
+            });
         }
-        
-        // -键: 缩小虚拟手（模拟远离）
-        if (e.key === '-' || e.key === '_') {
-            virtualHand.scale = Math.max(CONFIG.KEYBOARD.MIN_HAND_SCALE, virtualHand.scale - 0.1);
-            updateStatus(`➖ 手部缩小: ${virtualHand.scale.toFixed(1)}x`);
+
+        // 7. 创建点击效果
+        function createClickEffect(x, y) {
+            const canvas = document.getElementById('treeCanvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 绘制点击涟漪效果
+            let radius = 0;
+            const maxRadius = 25;
+            const color = `hsl(${Math.random() * 360}, 100%, 65%)`;
+            
+            function drawRipple() {
+                ctx.beginPath();
+                ctx.arc(x, y, radius, 0, Math.PI * 2);
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 2;
+                ctx.globalAlpha = 1 - (radius / maxRadius);
+                ctx.stroke();
+                
+                radius += 1.5;
+                
+                if (radius < maxRadius) {
+                    requestAnimationFrame(drawRipple);
+                } else {
+                    ctx.globalAlpha = 1;
+                    // 重绘圣诞树（清除涟漪）
+                    const width = canvas.width;
+                    const height = canvas.height;
+                    ctx.clearRect(0, 0, width, height);
+                    
+                    // 重新绘制圣诞树
+                    const tempCanvas = document.createElement('canvas');
+                    tempCanvas.width = width;
+                    tempCanvas.height = height;
+                    const tempCtx = tempCanvas.getContext('2d');
+                    
+                    // 保存当前圣诞树状态（简化处理）
+                    setTimeout(() => {
+                        initChristmasTree();
+                    }, 50);
+                }
+            }
+            
+            drawRipple();
         }
-        
-        // 方向键/WASD: 移动虚拟手
-        handleHandMovement();
-    });
-    
-    // 键盘释放事件
-    document.addEventListener('keyup', function(e) {
-        keysPressed[e.key.toLowerCase()] = false;
-        
-        // F键释放: 停止挥手风暴
-        if (e.key.toLowerCase() === 'f') {
-            virtualHand.windForce.x = 0;
-            virtualHand.windForce.y = 0;
+
+        // 8. 显示弹窗
+        function showPopup(title, message) {
+            const popup = document.getElementById('blessingPopup');
+            const popupTitle = document.getElementById('popupTitle');
+            const popupMessage = document.getElementById('popupMessage');
+            
+            popupTitle.textContent = title;
+            popupMessage.textContent = message;
+            popup.style.display = 'flex';
+            
+            // 3秒后自动关闭
+            setTimeout(() => {
+                if (popup.style.display === 'flex') {
+                    popup.style.display = 'none';
+                }
+            }, 3000);
         }
-        
-        // 停止移动
-        if (['w','a','s','d','arrowup','arrowleft','arrowdown','arrowright'].includes(e.key.toLowerCase())) {
-            virtualHand.isMoving = false;
-            virtualHand.velocityX = 0;
-            virtualHand.velocityY = 0;
+
+        // 9. 保存为图片
+        function saveTreeAsImage() {
+            const canvas = document.getElementById('treeCanvas');
+            
+            // 创建临时画布用于高质量导出
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = canvas.width * 2;
+            tempCanvas.height = canvas.height * 2;
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            // 白色背景
+            tempCtx.fillStyle = '#0c2b3e';
+            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+            
+            // 缩放绘制
+            tempCtx.scale(2, 2);
+            tempCtx.drawImage(canvas, 0, 0);
+            
+            // 添加文字
+            tempCtx.scale(1, 1); // 重置缩放
+            tempCtx.font = '24px Microsoft YaHei';
+            tempCtx.fillStyle = '#FFD700';
+            tempCtx.textAlign = 'center';
+            tempCtx.fillText('✨ 圣诞快乐 ✨', tempCanvas.width / 2, tempCanvas.height - 40);
+            
+            // 创建下载链接
+            const link = document.createElement('a');
+            const timestamp = new Date().getTime();
+            link.download = `圣诞树-${timestamp}.png`;
+            link.href = tempCanvas.toDataURL('image/png');
+            link.click();
+            
+            showPopup("保存成功", "圣诞树图片已保存到您的设备中！");
         }
-    });
-    
-    // 鼠标点击显示祝福
-    document.addEventListener('click', function(e) {
-        if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA' && e.target.tagName !== 'BUTTON') {
-            showRandomBlessing();
-        }
-    });
-}
 
-// ==================== 处理虚拟手移动 ====================
-function handleHandMovement() {
-    // 重置速度
-    virtualHand.velocityX = 0;
-    virtualHand.velocityY = 0;
-    
-    // WASD 控制
-    if (keysPressed['w'] || keysPressed['arrowup']) {
-        virtualHand.velocityY = -CONFIG.KEYBOARD.HAND_SPEED;
-        virtualHand.isMoving = true;
-    }
-    if (keysPressed['s'] || keysPressed['arrowdown']) {
-        virtualHand.velocityY = CONFIG.KEYBOARD.HAND_SPEED;
-        virtualHand.isMoving = true;
-    }
-    if (keysPressed['a'] || keysPressed['arrowleft']) {
-        virtualHand.velocityX = -CONFIG.KEYBOARD.HAND_SPEED;
-        virtualHand.isMoving = true;
-    }
-    if (keysPressed['d'] || keysPressed['arrowright']) {
-        virtualHand.velocityX = CONFIG.KEYBOARD.HAND_SPEED;
-        virtualHand.isMoving = true;
-    }
-    
-    // 如果同时按下了F键，增加风力
-    if (keysPressed['f'] && virtualHand.isMoving) {
-        virtualHand.windForce.x = virtualHand.velocityX * 3;
-        virtualHand.windForce.y = virtualHand.velocityY * 3;
-        
-        // 每200ms应用一次风力
-        const now = Date.now();
-        if (now - lastWindTime > 200) {
-            applyWindForce(virtualHand.windForce.x, virtualHand.windForce.y, 1.5);
-            lastWindTime = now;
-        }
-    }
-}
+        // 10. 页面可见性变化处理
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                // 页面隐藏时暂停音乐
+                const bgMusic = document.getElementById('bgMusic');
+                if (musicEnabled && !bgMusic.paused) {
+                    bgMusic.pause();
+                }
+            } else {
+                // 页面显示时恢复音乐
+                const bgMusic = document.getElementById('bgMusic');
+                if (musicEnabled && bgMusic.paused) {
+                    bgMusic.play().catch(e => console.log("恢复播放失败:", e));
+                }
+            }
+        });
 
-// ==================== 事件监听器设置 ====================
-function setupEventListeners() {
-    // 自动演示按钮
-    document.getElementById('autoDemoBtn').addEventListener('click', startAutoDemo);
-    
-    // 重置按钮
-    document.getElementById('resetBtn').addEventListener('click', resetToChristmasTree);
-    
-    // 照片上传
-    document.getElementById('photoUpload').addEventListener('change', handlePhotoUpload);
-    
-    // 更新提示词
-    document.getElementById('updatePromptBtn').addEventListener('click', updatePrompt);
-    
-    // 设置键盘控制
-    setupKeyboardControls();
-}
+        // 初始化彩灯
+        setTimeout(() => {
+            initLights();
+        }, 1000);
 
-// ==================== 帧率计算 ====================
-function updateFPS() {
-    frameCount++;
-    const now = performance.now();
-    
-    if (now >= lastTime + 1000) {
-        fps = Math.round((frameCount * 1000) / (now - lastTime));
-        document.getElementById('fps').textContent = fps;
-        frameCount = 0;
-        lastTime = now;
-    }
-}
-
-// ==================== 状态更新 ====================
-function updateStatus(message) {
-    const statusEl = document.getElementById('status');
-    statusEl.textContent = `📡 ${message}`;
-    console.log(`[系统状态] ${message}`);
-}
-
-// ==================== 窗口大小调整 ====================
-function onWindowResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-}
-
-// ==================== 动画循环 ====================
-function animate() {
-    requestAnimationFrame(animate);
-    
-    // 更新物理
-    updatePhysics();
-    
-    // 更新帧率
-    updateFPS();
-    
-    // 更新控制
-    controls.update();
-    
-    // 渲染场景
-    renderer.render(scene, camera);
-}
-
-// ==================== 初始化完成 ====================
-updateStatus("🎮 键盘控制版粒子圣诞树系统就绪！");
-console.log("🎄 键盘控制版粒子圣诞树系统准备就绪！");
-</script>
+        console.log('圣诞树页面初始化完成！');
+    </script>
 </body>
 </html>

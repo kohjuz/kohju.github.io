@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>超浪漫圣诞树 | 代码祝福</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: linear-gradient(to bottom, #0a2e38, #1a5f7a);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            font-family: 'Arial Rounded MT Bold', 'Microsoft YaHei', sans-serif;
+            color: white;
+            padding: 20px;
+            position: relative;
+        }
+        .container { text-align: center; z-index: 10; position: relative; }
+        h1 {
+            margin-bottom: 10px;
+            color: #FFD700;
+            text-shadow: 0 0 10px #FF4500;
+            font-size: 2.2rem;
+        }
+        .subtitle {
+            margin-bottom: 40px;
+            color: #98FB98;
+            font-size: 1.1rem;
+        }
+        .tree {
+            position: relative;
+            width: 200px;
+            height: 300px;
+            margin: 30px auto;
+        }
+        /* 树冠部分 - 使用阴影层叠 */
+        .tree::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0; height: 0;
+            border-left: 100px solid transparent;
+            border-right: 100px solid transparent;
+            border-bottom: 160px solid #228B22;
+            box-shadow: inset 0 -10px 20px rgba(0, 80, 0, 0.5);
+        }
+        /* 树干 */
+        .tree::after {
+            content: '';
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 40px;
+            background: #8B4513;
+            border-radius: 5px;
+        }
+        /* 闪烁的彩灯 - 通过绝对定位随机分布 */
+        .light {
+            position: absolute;
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            background: currentColor;
+            box-shadow: 0 0 8px currentColor;
+            animation: twinkle 1.5s infinite alternate ease-in-out;
+            z-index: 5;
+        }
+        @keyframes twinkle {
+            0% { opacity: 0.3; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1.1); }
+        }
+        /* 雪花 */
+        .snowflake {
+            position: absolute;
+            top: -20px;
+            background: white;
+            border-radius: 50%;
+            opacity: 0.9;
+            filter: blur(0.5px);
+            z-index: 1;
+        }
+        /* 点击出现的祝福语 */
+        .blessing {
+            position: absolute;
+            color: #FFD700;
+            font-size: 1.8rem;
+            font-weight: bold;
+            pointer-events: none;
+            z-index: 100;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+            animation: floatUp 2s forwards ease-out;
+            white-space: nowrap;
+        }
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-100px) scale(1.2); }
+        }
+        .instructions {
+            margin-top: 40px;
+            color: #87CEEB;
+            font-size: 1rem;
+            max-width: 300px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✨ 超浪漫圣诞树 ✨</h1>
+        <p class="subtitle">点击页面，收获你的圣诞祝福</p>
+        <div class="tree" id="christmasTree">
+            <!-- 彩灯将通过JS动态添加到这里 -->
+        </div>
+        <p class="instructions">💡 轻点屏幕任意位置，会有惊喜祝福语出现哦！</p>
+    </div>
+
+    <script>
+        // 祝福语库
+        const blessings = [
+            "🎄 圣诞快乐！",
+            "❤️ 平安喜乐",
+            "🌟 心想事成",
+            "🎁 好运常伴",
+            "✨ 幸福安康",
+            "🦌 铃儿响叮当"
+        ];
+
+        // 1. 生成随机彩灯
+        const tree = document.getElementById('christmasTree');
+        const treeRect = tree.getBoundingClientRect();
+        const lightColors = ['#FF0000', '#00FF00', '#FFFF00', '#1E90FF', '#FF69B4', '#FFA500'];
+
+        for (let i = 0; i < 25; i++) {
+            const light = document.createElement('div');
+            light.className = 'light';
+            
+            // 将灯随机分布在树冠的三角形区域内
+            let x, y;
+            do {
+                x = Math.random() * 200 - 100; // -100 到 100
+                y = Math.random() * 160; // 0 到 160
+            } while (!isInTriangle(x, y));
+            
+            light.style.left = `calc(50% + ${x}px)`;
+            light.style.top = `${140 - y}px`; // 从树冠底部开始计算
+            light.style.color = lightColors[Math.floor(Math.random() * lightColors.length)];
+            light.style.animationDelay = `${Math.random() * 2}s`;
+            
+            tree.appendChild(light);
+        }
+
+        // 判断点是否在三角形内（树冠）
+        function isInTriangle(x, y) {
+            const halfBase = 100 * (1 - y / 160); // 越往上，三角形宽度越小
+            return Math.abs(x) <= halfBase;
+        }
+
+        // 2. 生成雪花
+        function createSnowflake() {
+            const snowflake = document.createElement('div');
+            snowflake.className = 'snowflake';
+            
+            const size = Math.random() * 5 + 3;
+            snowflake.style.width = `${size}px`;
+            snowflake.style.height = `${size}px`;
+            
+            snowflake.style.left = `${Math.random() * 100}vw`;
+            snowflake.style.animationDuration = `${Math.random() * 5 + 5}s`;
+            snowflake.style.animationName = 'fall';
+            snowflake.style.animationTimingFunction = 'linear';
+            snowflake.style.animationIterationCount = 'infinite';
+            
+            // 定义雪花飘落动画
+            const styleSheet = document.styleSheets[0];
+            if (!document.querySelector('style#snow-animation')) {
+                const snowStyle = document.createElement('style');
+                snowStyle.id = 'snow-animation';
+                snowStyle.textContent = `
+                    @keyframes fall {
+                        to { transform: translateY(100vh) rotate(360deg); }
+                    }
+                `;
+                document.head.appendChild(snowStyle);
+            }
+            
+            document.body.appendChild(snowflake);
+            
+            // 雪花落地后移除
+            setTimeout(() => {
+                snowflake.remove();
+            }, 10000);
+        }
+        // 初始化一些雪花
+        for (let i = 0; i < 50; i++) {
+            setTimeout(createSnowflake, Math.random() * 2000);
+        }
+        // 持续生成雪花
+        setInterval(createSnowflake, 500);
+
+        // 3. 点击出现祝福语
+        document.body.addEventListener('click', function(e) {
+            const blessing = document.createElement('div');
+            blessing.className = 'blessing';
+            blessing.textContent = blessings[Math.floor(Math.random() * blessings.length)];
+            
+            blessing.style.left = `${e.clientX}px`;
+            blessing.style.top = `${e.clientY}px`;
+            
+            document.body.appendChild(blessing);
+            
+            // 动画结束后移除元素
+            setTimeout(() => {
+                blessing.remove();
+            }, 2000);
+        });
+    </script>
+</body>
+</html>

@@ -2,792 +2,194 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>梦幻紫色圣诞树</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <title>圣诞粒子圣诞树</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #0a0e1a;
-            color: #e6e6ff;
-            min-height: 100vh;
-            overflow-x: hidden;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            cursor: pointer;
-            position: relative;
-        }
-        
-        .header {
-            text-align: center;
-            margin-bottom: 30px;
-            z-index: 100;
-            max-width: 800px;
-        }
-        
-        h1 {
-            font-size: 2.8rem;
-            margin-bottom: 15px;
-            background: linear-gradient(to right, #b19cd9, #d8b4fe, #a78bfa);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-            text-shadow: 0 0 15px rgba(179, 136, 255, 0.5);
-            letter-spacing: 2px;
-        }
-        
-        .subtitle {
-            font-size: 1.2rem;
-            color: #c4b5fd;
-            line-height: 1.6;
-            max-width: 600px;
-            margin: 0 auto 10px;
-        }
-        
-        .instructions {
-            font-size: 1rem;
-            color: #a5b4fc;
-            background: rgba(30, 27, 75, 0.5);
-            padding: 12px 20px;
-            border-radius: 15px;
-            border-left: 4px solid #8b5cf6;
-            margin-top: 15px;
-        }
-        
-        .scene-container {
-            position: relative;
-            width: 100%;
-            max-width: 900px;
-            height: 700px;
-            margin: 0 auto;
-            z-index: 10;
-        }
-        
-        /* 夜空背景 */
-        .night-sky {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            background: radial-gradient(ellipse at center, #0f172a 0%, #0a0e1a 70%);
-            border-radius: 20px;
             overflow: hidden;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.7);
         }
-        
-        /* 圣诞树容器 */
-        .tree-container {
-            position: absolute;
-            bottom: 120px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 400px;
-            height: 550px;
-            z-index: 20;
+        body {
+            width: 100vw;
+            height: 133.33vw; /* 3:4比例 */
+            background: #000;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            touch-action: none;
         }
-        
-        /* 树冠层 - 紫色渐变 */
-        .tree-layer {
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            border-radius: 50% 50% 0 0;
-            box-shadow: inset 0 0 30px rgba(255, 255, 255, 0.2);
-        }
-        
-        .layer-1 {
-            width: 300px;
-            height: 200px;
-            background: linear-gradient(to top, #4c1d95, #7c3aed, #a78bfa);
-            bottom: 0;
-            z-index: 3;
-        }
-        
-        .layer-2 {
-            width: 250px;
-            height: 180px;
-            background: linear-gradient(to top, #5b21b6, #8b5cf6, #c4b5fd);
-            bottom: 180px;
-            z-index: 4;
-        }
-        
-        .layer-3 {
-            width: 200px;
-            height: 160px;
-            background: linear-gradient(to top, #6d28d9, #a78bfa, #ddd6fe);
-            bottom: 330px;
-            z-index: 5;
-        }
-        
-        .layer-4 {
-            width: 150px;
-            height: 140px;
-            background: linear-gradient(to top, #7c3aed, #c4b5fd, #ede9fe);
-            bottom: 460px;
-            z-index: 6;
-        }
-        
-        /* 冰雪纹理 */
-        .snow-texture {
+        /* 雪花容器 */
+        .snow {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-image: 
-                radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.4) 2px, transparent 3px),
-                radial-gradient(circle at 70% 40%, rgba(255, 255, 255, 0.3) 2px, transparent 3px),
-                radial-gradient(circle at 40% 70%, rgba(255, 255, 255, 0.4) 2px, transparent 3px),
-                radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.3) 2px, transparent 3px);
-            background-size: 100px 100px, 120px 120px, 90px 90px, 110px 110px;
-            border-radius: inherit;
-            z-index: 7;
-            opacity: 0.6;
-        }
-        
-        /* 树干 */
-        .trunk {
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 40px;
-            height: 80px;
-            background: linear-gradient(to right, #7c2d12, #92400e, #7c2d12);
-            z-index: 2;
-            border-radius: 8px 8px 0 0;
-            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.5);
-        }
-        
-        /* 树顶星星 */
-        .tree-star {
-            position: absolute;
-            top: -25px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 60px;
-            height: 60px;
-            background: radial-gradient(circle, #fef3c7, #fde68a, #fbbf24);
-            clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
-            z-index: 25;
-            box-shadow: 0 0 30px #fef3c7, 0 0 60px rgba(254, 243, 199, 0.7);
-            animation: starGlow 2s infinite alternate ease-in-out;
-        }
-        
-        @keyframes starGlow {
-            0% { box-shadow: 0 0 20px #fef3c7, 0 0 40px rgba(254, 243, 199, 0.7); }
-            100% { box-shadow: 0 0 30px #fef3c7, 0 0 60px rgba(254, 243, 199, 0.9), 0 0 80px rgba(254, 243, 199, 0.5); }
-        }
-        
-        /* 蓝紫色宝石饰品 */
-        .ornament {
-            position: absolute;
-            border-radius: 50%;
-            z-index: 15;
-            box-shadow: 
-                inset 0 0 15px rgba(255, 255, 255, 0.6),
-                0 5px 15px rgba(0, 0, 0, 0.3);
-            animation: sway 4s infinite alternate ease-in-out;
-            transition: transform 0.3s;
-        }
-        
-        .ornament:hover {
-            transform: scale(1.2);
-        }
-        
-        @keyframes sway {
-            0% { transform: translateX(-2px) rotate(-1deg); }
-            100% { transform: translateX(2px) rotate(1deg); }
-        }
-        
-        /* 蓝紫色宝石颜色变体 */
-        .ornament.purple {
-            background: radial-gradient(circle at 30% 30%, #a78bfa, #7c3aed, #5b21b6);
-        }
-        
-        .ornament.blue {
-            background: radial-gradient(circle at 30% 30%, #818cf8, #4f46e5, #3730a3);
-        }
-        
-        .ornament.violet {
-            background: radial-gradient(circle at 30% 30%, #c4b5fd, #8b5cf6, #6d28d9);
-        }
-        
-        /* 雪人 */
-        .snowman {
-            position: absolute;
-            bottom: 120px;
-            left: 15%;
-            width: 120px;
-            height: 160px;
-            z-index: 30;
-        }
-        
-        .snowman-body {
-            position: absolute;
-            border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, #ffffff, #f0f9ff, #e0f2fe);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-        }
-        
-        .snowman-bottom {
-            width: 100px;
-            height: 100px;
-            bottom: 0;
-            left: 10px;
-        }
-        
-        .snowman-middle {
-            width: 70px;
-            height: 70px;
-            bottom: 80px;
-            left: 25px;
-        }
-        
-        .snowman-head {
-            width: 50px;
-            height: 50px;
-            bottom: 135px;
-            left: 35px;
-        }
-        
-        .snowman-hat {
-            position: absolute;
-            width: 60px;
-            height: 25px;
-            background: #1d4ed8;
-            border-radius: 10px 10px 0 0;
-            bottom: 180px;
-            left: 30px;
-            z-index: 2;
-        }
-        
-        .snowman-hat::after {
-            content: '';
-            position: absolute;
-            width: 40px;
-            height: 30px;
-            background: #1d4ed8;
-            border-radius: 5px;
-            top: -30px;
-            left: 10px;
-        }
-        
-        .snowman-scarf {
-            position: absolute;
-            width: 80px;
-            height: 20px;
-            background: linear-gradient(to right, #ef4444, #f87171, #ef4444);
-            border-radius: 10px;
-            bottom: 115px;
-            left: 20px;
             z-index: 1;
+            pointer-events: none;
         }
-        
-        .snowman-eye {
-            position: absolute;
-            width: 8px;
-            height: 8px;
-            background: #000;
-            border-radius: 50%;
-            bottom: 155px;
-        }
-        
-        .eye-left {
-            left: 45px;
-        }
-        
-        .eye-right {
-            left: 67px;
-        }
-        
-        .snowman-nose {
-            position: absolute;
-            width: 0;
-            height: 0;
-            border-left: 12px solid transparent;
-            border-right: 12px solid transparent;
-            border-top: 20px solid #f97316;
-            bottom: 145px;
-            left: 54px;
-            transform: rotate(180deg);
-        }
-        
-        /* 礼物盒 */
-        .gift-box {
-            position: absolute;
-            bottom: 120px;
-            right: 15%;
-            width: 100px;
-            height: 100px;
-            z-index: 30;
-        }
-        
-        .gift-body {
-            position: absolute;
-            width: 100%;
-            height: 70px;
-            background: linear-gradient(135deg, #dc2626, #ef4444, #dc2626);
-            bottom: 0;
-            border-radius: 10px;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
-        }
-        
-        .gift-lid {
-            position: absolute;
-            width: 110%;
-            height: 30px;
-            background: linear-gradient(135deg, #b91c1c, #dc2626, #b91c1c);
-            top: 0;
-            left: -5%;
-            border-radius: 10px 10px 5px 5px;
-        }
-        
-        .gift-bow {
-            position: absolute;
-            width: 40px;
-            height: 40px;
-            background: #fbbf24;
-            border-radius: 50%;
-            top: -20px;
-            left: 50%;
-            transform: translateX(-50%);
+        /* 圣诞树容器 */
+        .tree-container {
+            position: relative;
+            width: 80%;
+            height: 80%;
             z-index: 2;
         }
-        
-        .gift-bow::before, .gift-bow::after {
-            content: '';
-            position: absolute;
-            width: 60px;
-            height: 20px;
-            background: #fbbf24;
-            border-radius: 10px;
-            top: 10px;
-        }
-        
-        .gift-bow::before {
-            transform: rotate(45deg);
-            left: -35px;
-        }
-        
-        .gift-bow::after {
-            transform: rotate(-45deg);
-            right: -35px;
-        }
-        
-        /* 雪花 */
-        .snowflake {
-            position: absolute;
-            background: white;
-            border-radius: 50%;
-            opacity: 0.8;
-            filter: blur(0.5px);
-            z-index: 5;
-            animation: fall linear infinite;
-        }
-        
-        @keyframes fall {
-            to {
-                transform: translateY(100vh) rotate(360deg);
-            }
-        }
-        
-        /* 紫色蝴蝶 */
-        .butterfly {
-            position: absolute;
-            width: 30px;
-            height: 20px;
-            z-index: 6;
-            opacity: 0.7;
-            animation: flutter 8s infinite alternate ease-in-out;
-        }
-        
-        .butterfly::before, .butterfly::after {
-            content: '';
-            position: absolute;
+        /* 圣诞树图片 */
+        .christmas-tree {
             width: 100%;
             height: 100%;
-            border-radius: 50% 50% 0 0;
-            background: radial-gradient(circle at center, #c4b5fd, #8b5cf6, #5b21b6);
+            object-fit: contain;
+            animation: rotate 5s linear infinite;
         }
-        
-        .butterfly::before {
-            transform: rotate(45deg);
+        /* 螺旋粒子特效 */
+        .spiral-particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: url('https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc_gen_image/dda3c3e1ebc24fa7894f33e312ae066c.jpeg~tplv-a9rns2rl98-image_dld_watermark_1_5b.png') no-repeat center/contain;
+            mask-image: radial-gradient(circle, black 50%, transparent 70%);
+            -webkit-mask-image: radial-gradient(circle, black 50%, transparent 70%);
+            animation: spiral-flow 5s ease-in-out infinite;
+            opacity: 0.8;
         }
-        
-        .butterfly::after {
-            transform: rotate(-45deg);
+        /* 烟雾特效 */
+        .smoke {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 40%;
+            background: rgba(255,255,255,0.1);
+            filter: blur(20px);
+            animation: smoke-rise 5s linear infinite;
+            z-index: 1;
         }
-        
-        @keyframes flutter {
-            0%, 100% { transform: translate(0, 0) rotate(0deg); }
-            25% { transform: translate(20px, -15px) rotate(5deg); }
-            50% { transform: translate(-15px, 10px) rotate(-5deg); }
-            75% { transform: translate(10px, -10px) rotate(3deg); }
+        /* 金粉特效 */
+        .gold-powder {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><circle cx="5" cy="5" r="1" fill="%23FFD700" opacity="0.8"/></svg>') repeat;
+            animation: gold-fall 5s linear infinite;
+            z-index: 2;
         }
-        
-        /* 祝福语 */
+        /* 祝福语弹窗 */
         .blessing {
             position: absolute;
-            color: #f0abfc;
-            font-size: 2rem;
+            color: #fff;
+            font-size: 16px;
             font-weight: bold;
+            text-shadow: 0 0 8px #FF0066, 0 0 12px #FFD700;
             pointer-events: none;
-            z-index: 200;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
-            white-space: nowrap;
-            animation: floatUp 3s forwards ease-out;
-            max-width: 90vw;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            padding: 5px 15px;
-            border-radius: 10px;
-            background: rgba(109, 40, 217, 0.2);
-            backdrop-filter: blur(5px);
+            animation: float-up 2s ease-out forwards;
+            z-index: 10;
         }
-        
-        @keyframes floatUp {
-            0% {
-                opacity: 1;
-                transform: translateY(0) scale(1);
-            }
-            100% {
-                opacity: 0;
-                transform: translateY(-150px) scale(1.3);
-            }
+        /* 动画定义 */
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
-        
-        /* 响应式调整 */
-        @media (max-width: 768px) {
-            .scene-container {
-                height: 600px;
-            }
-            
-            .tree-container {
-                width: 300px;
-                height: 450px;
-            }
-            
-            .layer-1 { width: 220px; height: 150px; }
-            .layer-2 { width: 180px; height: 130px; bottom: 140px; }
-            .layer-3 { width: 140px; height: 110px; bottom: 250px; }
-            .layer-4 { width: 100px; height: 90px; bottom: 350px; }
-            
-            h1 {
-                font-size: 2rem;
-            }
-            
-            .snowman {
-                left: 5%;
-                transform: scale(0.8);
-            }
-            
-            .gift-box {
-                right: 5%;
-                transform: scale(0.8);
-            }
-            
-            .blessing {
-                font-size: 1.5rem;
-            }
+        @keyframes spiral-flow {
+            0% { transform: scale(0.9) rotate(0deg); opacity: 0.7; }
+            50% { transform: scale(1.05) rotate(10deg); opacity: 0.9; }
+            100% { transform: scale(0.9) rotate(0deg); opacity: 0.7; }
         }
-        
-        .footer {
-            margin-top: 40px;
-            text-align: center;
-            color: #a5b4fc;
-            font-size: 0.9rem;
-            z-index: 100;
-            max-width: 800px;
-            padding: 15px;
-            background: rgba(30, 27, 75, 0.3);
-            border-radius: 15px;
-            border-top: 2px solid #5b21b6;
+        @keyframes smoke-rise {
+            0% { opacity: 0.2; transform: translateY(20px); }
+            100% { opacity: 0; transform: translateY(-20px); }
+        }
+        @keyframes gold-fall {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
+        }
+        @keyframes float-up {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-50px) scale(1.2); }
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1><i class="fas fa-tree"></i> 梦幻紫色圣诞树 <i class="fas fa-tree"></i></h1>
-        <p class="subtitle">一棵带有冰雪纹理、蓝紫色宝石和魔法蝴蝶的梦幻圣诞树，点击页面任意地方获取圣诞祝福</p>
-        <p class="instructions">💡 在屏幕任意位置点击鼠标或触摸屏幕，会弹出随机圣诞祝福语</p>
+    <!-- 雪花容器 -->
+    <div class="snow"></div>
+    <!-- 金粉特效 -->
+    <div class="gold-powder"></div>
+    <!-- 圣诞树容器 -->
+    <div class="tree-container">
+        <img src="https://p3-flow-imagex-sign.byteimg.com/tos-cn-i-a9rns2rl98/rc_gen_image/dda3c3e1ebc24fa7894f33e312ae066c.jpeg~tplv-a9rns2rl98-image_dld_watermark_1_5b.png" alt="圣诞粒子树" class="christmas-tree">
+        <div class="spiral-particles"></div>
     </div>
-
-    <div class="scene-container">
-        <div class="night-sky"></div>
-        
-        <!-- 雪花和蝴蝶由JS生成 -->
-        
-        <div class="tree-container">
-            <!-- 圣诞树 -->
-            <div class="tree-layer layer-1">
-                <div class="snow-texture"></div>
-            </div>
-            <div class="tree-layer layer-2">
-                <div class="snow-texture"></div>
-            </div>
-            <div class="tree-layer layer-3">
-                <div class="snow-texture"></div>
-            </div>
-            <div class="tree-layer layer-4">
-                <div class="snow-texture"></div>
-            </div>
-            
-            <div class="trunk"></div>
-            <div class="tree-star"></div>
-            
-            <!-- 宝石饰品由JS动态生成 -->
-        </div>
-        
-        <!-- 雪人 -->
-        <div class="snowman">
-            <div class="snowman-body snowman-bottom"></div>
-            <div class="snowman-body snowman-middle"></div>
-            <div class="snowman-body snowman-head"></div>
-            <div class="snowman-hat"></div>
-            <div class="snowman-scarf"></div>
-            <div class="snowman-eye eye-left"></div>
-            <div class="snowman-eye eye-right"></div>
-            <div class="snowman-nose"></div>
-        </div>
-        
-        <!-- 礼物盒 -->
-        <div class="gift-box">
-            <div class="gift-body"></div>
-            <div class="gift-lid"></div>
-            <div class="gift-bow"></div>
-        </div>
-        
-        <!-- 祝福语由JS动态生成 -->
-    </div>
-    
-    <div class="footer">
-        <p>🎄 本页面为响应式设计，在手机和电脑上均可完美显示与交互 🎄</p>
-        <p>💜 紫色梦幻主题 | 手绘质感 | 光影效果 | 点击交互 💜</p>
-    </div>
+    <!-- 烟雾特效 -->
+    <div class="smoke"></div>
 
     <script>
-        // 祝福语库
+        // 生成雪花
+        function createSnow() {
+            const snowContainer = document.querySelector('.snow');
+            for (let i = 0; i < 100; i++) {
+                const snowflake = document.createElement('div');
+                snowflake.style.position = 'absolute';
+                snowflake.style.width = `${Math.random() * 3 + 1}px`;
+                snowflake.style.height = `${Math.random() * 3 + 1}px`;
+                snowflake.style.backgroundColor = '#fff';
+                snowflake.style.borderRadius = '50%';
+                snowflake.style.left = `${Math.random() * 100}%`;
+                snowflake.style.top = `${Math.random() * -100}%`;
+                snowflake.style.opacity = (Math.random() * 0.5 + 0.3).toString();
+                snowflake.style.animation = `snow-fall ${Math.random() * 10 + 5}s linear infinite`;
+                snowContainer.appendChild(snowflake);
+            }
+            // 雪花下落动画
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes snow-fall {
+                    0% { transform: translateY(0); }
+                    100% { transform: translateY(100vh); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // 祝福语列表
         const blessings = [
-            "🎄 紫色梦幻圣诞快乐！",
-            "💜 愿魔法之光常伴你左右",
-            "🔮 冰雪奇缘，梦幻成真",
-            "❄️ 冬日仙境，平安喜乐",
-            "🎁 礼物已送达，幸福请签收",
-            "✨ 星光为引，美好如期",
-            "🦋 蝴蝶翩翩，好运连连",
-            "🌟 愿你的世界如这圣诞树般璀璨",
-            "💎 宝石之光，照亮前程",
-            "☃️ 雪人微笑，温暖一冬",
-            "🎶 圣诞钟声，幸福回响",
-            "🕯️ 烛光摇曳，梦想绽放"
+            "圣诞快乐🎄",
+            "平安喜乐✨",
+            "万事顺遂🌟",
+            "幸福安康🎁",
+            "心想事成🎅",
+            "喜乐常伴☃️",
+            "阖家欢乐🥳",
+            "好运连连🍀"
         ];
-        
-        // 1. 生成雪花
-        function createSnowflake() {
-            const snowflake = document.createElement('div');
-            snowflake.className = 'snowflake';
-            
-            // 随机大小 (2px 到 8px)
-            const size = Math.random() * 6 + 2;
-            snowflake.style.width = `${size}px`;
-            snowflake.style.height = `${size}px`;
-            
-            // 随机起始位置
-            snowflake.style.left = `${Math.random() * 100}vw`;
-            
-            // 随机透明度
-            snowflake.style.opacity = Math.random() * 0.7 + 0.3;
-            
-            // 随机动画时长和飘落速度
-            const duration = Math.random() * 10 + 10;
-            const delay = Math.random() * 5;
-            
-            snowflake.style.animation = `fall ${duration}s linear ${delay}s infinite`;
-            
-            document.body.appendChild(snowflake);
-            
-            // 雪花落地后移除，防止DOM元素过多
-            setTimeout(() => {
-                if (snowflake.parentNode) {
-                    snowflake.remove();
-                }
-            }, (duration + delay) * 1000);
-        }
-        
-        // 2. 生成蝴蝶
-        function createButterfly() {
-            const butterfly = document.createElement('div');
-            butterfly.className = 'butterfly';
-            
-            // 随机大小
-            const scale = Math.random() * 0.8 + 0.5;
-            butterfly.style.transform = `scale(${scale})`;
-            
-            // 随机起始位置
-            butterfly.style.left = `${Math.random() * 100}vw`;
-            butterfly.style.top = `${Math.random() * 80}vh`;
-            
-            // 随机动画延迟
-            const delay = Math.random() * 5;
-            butterfly.style.animationDelay = `${delay}s`;
-            
-            // 随机颜色深浅
-            const hue = Math.random() * 30 + 250; // 紫色范围
-            butterfly.style.filter = `hue-rotate(${hue}deg)`;
-            
-            document.querySelector('.scene-container').appendChild(butterfly);
-            
-            // 蝴蝶飞行一段时间后移除
-            setTimeout(() => {
-                if (butterfly.parentNode) {
-                    butterfly.remove();
-                }
-            }, 20000);
-        }
-        
-        // 3. 生成蓝紫色宝石饰品
-        function createOrnaments() {
-            const treeContainer = document.querySelector('.tree-container');
-            const ornamentClasses = ['ornament purple', 'ornament blue', 'ornament violet'];
-            
-            // 为每一层树冠添加饰品
-            const layers = [
-                {width: 300, height: 200, count: 12}, // 底层
-                {width: 250, height: 180, count: 10},
-                {width: 200, height: 160, count: 8},
-                {width: 150, height: 140, count: 6}
-            ];
-            
-            layers.forEach((layer, layerIndex) => {
-                for (let i = 0; i < layer.count; i++) {
-                    const ornament = document.createElement('div');
-                    
-                    // 随机选择饰品类型
-                    const ornamentType = ornamentClasses[Math.floor(Math.random() * ornamentClasses.length)];
-                    ornament.className = ornamentType;
-                    
-                    // 随机大小
-                    const size = Math.random() * 20 + 12;
-                    ornament.style.width = `${size}px`;
-                    ornament.style.height = `${size}px`;
-                    
-                    // 计算饰品位置（在树冠范围内随机分布）
-                    const angle = Math.random() * Math.PI * 2;
-                    const radius = Math.random() * (layer.width / 3);
-                    
-                    const centerX = 200; // 树冠中心X坐标
-                    const centerY = 550 - (layerIndex * 150); // 树冠中心Y坐标
-                    
-                    const x = centerX + Math.cos(angle) * radius;
-                    const y = centerY + Math.sin(angle) * radius * 0.5;
-                    
-                    ornament.style.left = `${x}px`;
-                    ornament.style.top = `${y}px`;
-                    
-                    // 随机动画延迟
-                    ornament.style.animationDelay = `${Math.random() * 4}s`;
-                    
-                    treeContainer.appendChild(ornament);
-                }
-            });
-        }
-        
-        // 4. 点击弹出祝福语
-        function createBlessing(x, y) {
+
+        // 点击生成祝福语
+        function showBlessing(e) {
+            const x = e.clientX || e.touches[0].clientX;
+            const y = e.clientY || e.touches[0].clientY;
             const blessing = document.createElement('div');
             blessing.className = 'blessing';
-            
-            // 随机选择一条祝福语
             blessing.textContent = blessings[Math.floor(Math.random() * blessings.length)];
-            
-            // 设置位置为点击处
             blessing.style.left = `${x}px`;
             blessing.style.top = `${y}px`;
-            
-            document.querySelector('.scene-container').appendChild(blessing);
-            
-            // 动画结束后移除元素
-            setTimeout(() => {
-                if (blessing.parentNode) {
-                    blessing.remove();
-                }
-            }, 3000);
-            
-            // 同时让饰品闪烁一下作为反馈
-            const ornaments = document.querySelectorAll('.ornament');
-            ornaments.forEach(ornament => {
-                const originalBoxShadow = ornament.style.boxShadow;
-                ornament.style.boxShadow = originalBoxShadow + ', 0 0 20px #f0abfc';
-                setTimeout(() => {
-                    ornament.style.boxShadow = originalBoxShadow;
-                }, 500);
-            });
+            document.body.appendChild(blessing);
+            setTimeout(() => blessing.remove(), 2000);
         }
-        
-        // 5. 初始化所有元素
-        function init() {
-            console.log('初始化梦幻圣诞树...');
-            
-            // 生成初始雪花
-            for (let i = 0; i < 60; i++) {
-                setTimeout(() => createSnowflake(), Math.random() * 3000);
-            }
-            
-            // 持续生成雪花
-            setInterval(createSnowflake, 500);
-            
-            // 生成蝴蝶
-            for (let i = 0; i < 8; i++) {
-                setTimeout(() => createButterfly(), Math.random() * 4000);
-            }
-            
-            // 持续生成蝴蝶
-            setInterval(createButterfly, 8000);
-            
-            // 生成饰品
-            createOrnaments();
-            
-            // 绑定点击事件
-            document.addEventListener('click', function(e) {
-                createBlessing(e.clientX, e.clientY);
-            });
-            
-            // 移动端触摸事件
-            document.addEventListener('touchstart', function(e) {
-                e.preventDefault();
-                const touch = e.touches[0];
-                createBlessing(touch.clientX, touch.clientY);
-            }, { passive: false });
-            
-            // 页面加载后显示欢迎祝福
-            setTimeout(() => {
-                const centerX = window.innerWidth / 2;
-                const centerY = window.innerHeight / 2 + 50;
-                createBlessing(centerX, centerY);
-            }, 1500);
-            
-            console.log('梦幻圣诞树初始化完成！');
-        }
-        
-        // 页面加载完成后初始化
-        window.addEventListener('load', init);
-        
-        // 窗口大小调整时重新定位饰品
-        window.addEventListener('resize', function() {
-            // 移除现有饰品
-            document.querySelectorAll('.ornament').forEach(ornament => ornament.remove());
-            // 重新生成饰品
-            createOrnaments();
+
+        // 初始化
+        createSnow();
+        document.addEventListener('click', showBlessing);
+        document.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            showBlessing(e);
         });
     </script>
 </body>
